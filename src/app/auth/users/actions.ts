@@ -2,12 +2,16 @@
 
 "use server";
 
-import { mockCurrentUser, mockClerkClient } from "@/lib/mock-auth";
+import { currentUser, clerkClient } from "@clerk/nextjs/server";
 import { connectAppDatabase } from "@/infra/db/mongodb";
 import { UserDocument } from "@/types/db";
 
 export async function syncUser() {
-  const user = await mockCurrentUser();
+  const user = await currentUser();
+
+  if (!user) {
+    return { success: false, error: "Unauthorized" };
+  }
 
   const email = user.emailAddresses[0]?.emailAddress;
   if (!email) {
@@ -48,15 +52,15 @@ export async function syncUser() {
       throw new Error("Database sync failed: No document returned");
     }
 
-    // 3. Update mock metadata (no-op in mock mode)
+    // 3. Update Clerk Metadata
     if (
       user.publicMetadata.role !== result.role ||
-      user.publicMetadata.uid !== result._id?.toString()
+      user.publicMetadata.uid !== result._id.toString()
     ) {
-      const clientClerk = await mockClerkClient();
+      const clientClerk = await clerkClient();
       await clientClerk.users.updateUserMetadata(user.id, {
         publicMetadata: {
-          uid: result._id?.toString() ?? "",
+          uid: result._id.toString(),
           role: result.role,
         },
       });
@@ -64,7 +68,7 @@ export async function syncUser() {
 
     return {
       success: true,
-      userId: result._id?.toString() ?? "",
+      userId: result._id.toString(),
       role: result.role,
     };
   } catch (error) {

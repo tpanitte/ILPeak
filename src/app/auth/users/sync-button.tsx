@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/lib/mock-auth-client";
+import { useUser } from "@clerk/nextjs";
 import { syncUser } from "./actions";
 import { Button } from "@/components/ui/button";
 

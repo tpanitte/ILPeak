@@ -1,9 +1,19 @@
-import { mockCurrentUser, mockAuth } from "@/lib/mock-auth";
+import { currentUser, auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { SyncButton } from "./sync-button";
 
 export default async function Page() {
-  const { userId } = await mockAuth();
-  const user = await mockCurrentUser();
+  const { userId, redirectToSignIn } = await auth();
+
+  if (!userId) {
+    return redirectToSignIn();
+  }
+
+  const user = await currentUser();
+
+  if (!user) {
+    return redirectToSignIn();
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background">
