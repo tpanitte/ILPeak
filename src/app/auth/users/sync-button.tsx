@@ -4,7 +4,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/lib/mock-auth-client";
 import { syncUser } from "./actions";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +26,7 @@ export function SyncButton() {
       } else {
         setError(result.error ?? "Sync failed");
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
