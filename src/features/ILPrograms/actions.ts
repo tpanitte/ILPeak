@@ -2,7 +2,7 @@
 
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { mockAuth } from "@/lib/mock-auth";
 // 1. Import your Domain Service
 import { ILProgramsService } from "@/domain/ILPrograms/service"; 
 // 2. Import your Event Builder
@@ -16,7 +16,7 @@ export async function createProgramAction(props: {
   classroomDay: string;
   sessions: ProgramSession[];
 }) {
-  const { userId } = await auth();
+  const { userId } = await mockAuth();
   if (!userId) {
     throw new Error("Unauthorized");
   }
