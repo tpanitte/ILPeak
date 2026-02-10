@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
-  BarChart3,
   Upload,
   Users,
-  Settings,
+  Target,
+  Home,
   ChevronLeft,
   ChevronRight,
+  UsersRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -25,15 +26,16 @@ const NAV_SECTIONS = [
   {
     label: "Admin",
     items: [
+      { href: "/admin/import", label: "Import Data", icon: Upload },
+      { href: "/admin/groups", label: "Groups", icon: UsersRound },
       { href: "/admin/programs", label: "Programs", icon: BookOpen },
-      { href: "/admin/programs/new", label: "New Program", icon: BookOpen },
     ],
   },
   {
-    label: "Performance",
+    label: "Coaching",
     items: [
-      { href: "/performance", label: "Tracker", icon: BarChart3 },
-      { href: "/performance/import", label: "Import Data", icon: Upload },
+      { href: "/coaching/weekly-goals", label: "Weekly Goals", icon: Target },
+      { href: "/coaching/home-intro", label: "Home Intro", icon: Home },
     ],
   },
   {

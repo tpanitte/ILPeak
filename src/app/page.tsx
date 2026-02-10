@@ -1,13 +1,14 @@
 import Link from "next/link";
 import {
-  BookOpen,
-  BarChart3,
   Upload,
-  Users,
-  Plus,
+  UsersRound,
+  Target,
+  Home,
+  BookOpen,
   ArrowRight,
   TrendingUp,
-  Clock,
+  Users,
+  CalendarDays,
 } from "lucide-react";
 import {
   Card,
@@ -17,87 +18,87 @@ import {
   CardContent,
   CardAction,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 const STATS = [
   {
-    label: "Active Programs",
-    value: "12",
-    change: "+2 this month",
-    icon: BookOpen,
-    trend: "up" as const,
-  },
-  {
-    label: "Total Participants",
-    value: "248",
-    change: "+18 this week",
+    label: "Coaches",
+    value: "6",
+    change: "2 groups configured",
     icon: Users,
-    trend: "up" as const,
   },
   {
-    label: "Avg. Performance",
-    value: "87%",
-    change: "+3.2% vs last cycle",
+    label: "Participants",
+    value: "10",
+    change: "All assigned to coaches",
+    icon: UsersRound,
+  },
+  {
+    label: "This Week GCF",
+    value: "12/20",
+    change: "60% of target",
     icon: TrendingUp,
-    trend: "up" as const,
   },
   {
-    label: "Pending Imports",
+    label: "Home Intros",
     value: "3",
-    change: "Last import 2h ago",
-    icon: Clock,
-    trend: "neutral" as const,
+    change: "2 scheduled, 1 completed",
+    icon: CalendarDays,
   },
 ];
 
 const QUICK_ACTIONS = [
   {
-    label: "Create Program",
-    description: "Set up a new ILP series with sessions and participants.",
-    href: "/admin/programs/new",
-    icon: Plus,
+    label: "Import Data",
+    description: "Upload CSV files for Coaches and Participants.",
+    href: "/admin/import",
+    icon: Upload,
   },
   {
-    label: "View Programs",
-    description: "Browse and manage existing program configurations.",
+    label: "Manage Groups",
+    description: "Organize coaches and PPs into groups with leaders.",
+    href: "/admin/groups",
+    icon: UsersRound,
+  },
+  {
+    label: "Weekly Goals",
+    description: "Set GCF and C/O targets, enter daily results.",
+    href: "/coaching/weekly-goals",
+    icon: Target,
+  },
+  {
+    label: "Home Introduction",
+    description: "Schedule and track 3-hour Home Intro sessions.",
+    href: "/coaching/home-intro",
+    icon: Home,
+  },
+  {
+    label: "Programs",
+    description: "Browse and manage ILP program configurations.",
     href: "/admin/programs",
     icon: BookOpen,
-  },
-  {
-    label: "Performance Tracker",
-    description: "Review daily performance metrics and participant data.",
-    href: "/performance",
-    icon: BarChart3,
-  },
-  {
-    label: "Import Data",
-    description: "Upload CSV files for bulk performance data ingestion.",
-    href: "/performance/import",
-    icon: Upload,
   },
 ];
 
 const RECENT_ACTIVITY = [
   {
-    action: "Program Created",
-    detail: "Leadership Essentials Q1 2026",
-    time: "2 hours ago",
+    action: "Goals Set",
+    detail: "Coach Somchai set GCF target=5, C/O target=20 for 4 PPs",
+    time: "1 hour ago",
   },
   {
-    action: "Data Imported",
-    detail: "248 performance records for Cycle 4",
-    time: "5 hours ago",
+    action: "Home Intro Scheduled",
+    detail: "Areeya K. - Feb 14, 10:00-13:00",
+    time: "3 hours ago",
   },
   {
-    action: "User Synced",
-    detail: "dev@ilpeak.test joined as ADMIN",
+    action: "CSV Imported",
+    detail: "6 coaches and 10 participants uploaded",
     time: "1 day ago",
   },
   {
-    action: "Program Updated",
-    detail: "Advanced Analytics Series - 3 sessions added",
-    time: "2 days ago",
+    action: "Group Created",
+    detail: "Alpha Team - Leader: Somchai T., 2 coaches, 4 PPs",
+    time: "1 day ago",
   },
 ];
 
@@ -110,7 +111,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Overview of your ILPeak program management workspace.
+          Overview of your ILPeak coaching and performance workspace.
         </p>
       </div>
 
@@ -125,7 +126,10 @@ export default function DashboardPage() {
               </CardTitle>
               <CardAction>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                  <stat.icon className="size-4 text-primary" aria-hidden="true" />
+                  <stat.icon
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                  />
                 </div>
               </CardAction>
             </CardHeader>
@@ -140,7 +144,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Quick Actions - 2 columns */}
         <div className="lg:col-span-2">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+          <h2 className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -150,9 +154,12 @@ export default function DashboardPage() {
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted group-hover:bg-primary/10">
-                        <action.icon className="size-4 text-primary" aria-hidden="true" />
+                        <action.icon
+                          className="size-4 text-primary"
+                          aria-hidden="true"
+                        />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <CardTitle className="text-sm">
                           {action.label}
                         </CardTitle>
@@ -160,6 +167,7 @@ export default function DashboardPage() {
                           {action.description}
                         </CardDescription>
                       </div>
+                      <ArrowRight className="size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
                   </CardHeader>
                 </Card>
@@ -170,14 +178,17 @@ export default function DashboardPage() {
 
         {/* Recent Activity - 1 column */}
         <div>
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+          <h2 className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             Recent Activity
           </h2>
           <Card>
             <CardContent className="pt-0">
               <ul className="divide-y divide-border" role="list">
                 {RECENT_ACTIVITY.map((item, i) => (
-                  <li key={i} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+                  <li
+                    key={i}
+                    className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0"
+                  >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">
                         {item.action}
