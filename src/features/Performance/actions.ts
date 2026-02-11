@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { mockAuth } from "@/lib/mock-auth";
 import { isAfter } from "date-fns";
 import { PerformanceService } from "@/domain/Performance/service";
 import { setProgramGoals } from "@/domain/Performance/Events/ProgramGoalsSet";
@@ -13,7 +13,7 @@ export async function updateParticipantGoalAction(props: {
   guests: number;
   registered: number;
 }) {
-  const { userId } = await auth();
+  const { userId } = await mockAuth();
   if (!userId) throw new Error("Unauthorized");
 
   // 1. Fetch the Program Schedule from the Read Model
