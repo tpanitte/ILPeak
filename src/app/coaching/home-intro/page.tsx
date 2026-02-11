@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardHeader,
@@ -26,39 +26,22 @@ import {
   Clock,
   CalendarDays,
   User,
+  Filter,
 } from "lucide-react";
-
-// ── Mock participants ──────────────────────────────────────────────────
-
-const MOCK_PPS = [
-  { id: "PP001", name: "Areeya K." },
-  { id: "PP002", name: "Boonsri R." },
-  { id: "PP003", name: "Chalerm N." },
-  { id: "PP004", name: "Duangjai F." },
-  { id: "PP005", name: "Ekachai V." },
-  { id: "PP006", name: "Fongchan B." },
-];
+import { COACHES, PARTICIPANTS, getCoachPPs } from "@/lib/mock-data";
 
 const TIME_SLOTS = [
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
+  "09:00", "10:00", "11:00", "12:00", "13:00",
+  "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
 ];
 
 interface HomeIntroSession {
   id: string;
   ppId: string;
-  date: string; // YYYY-MM-DD
-  startTime: string; // HH:mm
-  endTime: string; // auto-calculated +3h
+  coachId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
   status: "SCHEDULED" | "COMPLETED" | "CANCELLED";
 }
 
@@ -80,41 +63,37 @@ function formatDate(dateStr: string): string {
 
 export default function HomeIntroPage() {
   const [sessions, setSessions] = useState<HomeIntroSession[]>([
-    {
-      id: "HI1",
-      ppId: "PP001",
-      date: "2026-02-14",
-      startTime: "10:00",
-      endTime: "13:00",
-      status: "SCHEDULED",
-    },
-    {
-      id: "HI2",
-      ppId: "PP003",
-      date: "2026-02-15",
-      startTime: "14:00",
-      endTime: "17:00",
-      status: "COMPLETED",
-    },
+    { id: "HI1", ppId: "PP001", coachId: "C001", date: "2026-02-14", startTime: "10:00", endTime: "13:00", status: "SCHEDULED" },
+    { id: "HI2", ppId: "PP002", coachId: "C001", date: "2026-02-14", startTime: "14:00", endTime: "17:00", status: "COMPLETED" },
+    { id: "HI3", ppId: "PP005", coachId: "C003", date: "2026-02-15", startTime: "10:00", endTime: "13:00", status: "SCHEDULED" },
+    { id: "HI4", ppId: "PP010", coachId: "C005", date: "2026-02-16", startTime: "09:00", endTime: "12:00", status: "SCHEDULED" },
+    { id: "HI5", ppId: "PP015", coachId: "C008", date: "2026-02-16", startTime: "14:00", endTime: "17:00", status: "COMPLETED" },
+    { id: "HI6", ppId: "PP020", coachId: "C010", date: "2026-02-17", startTime: "10:00", endTime: "13:00", status: "SCHEDULED" },
   ]);
 
-  // New session form
+  const [selectedCoachId, setSelectedCoachId] = useState<string>("ALL");
+
+  // Form state
+  const [newCoachId, setNewCoachId] = useState("");
   const [newPpId, setNewPpId] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("10:00");
 
+  // PP options depend on selected coach in the form
+  const formPPs = newCoachId ? getCoachPPs(newCoachId) : [];
+
   function addSession() {
-    if (!newPpId || !newDate || !newTime) return;
+    if (!newPpId || !newDate || !newTime || !newCoachId) return;
     const id = `HI${Date.now()}`;
-    const endTime = addHours(newTime, 3);
     setSessions([
       ...sessions,
       {
         id,
         ppId: newPpId,
+        coachId: newCoachId,
         date: newDate,
         startTime: newTime,
-        endTime,
+        endTime: addHours(newTime, 3),
         status: "SCHEDULED",
       },
     ]);
@@ -140,17 +119,22 @@ export default function HomeIntroPage() {
 
   const statusColor: Record<string, string> = {
     SCHEDULED: "bg-primary/10 text-primary",
-    COMPLETED: "bg-success/10 text-success",
+    COMPLETED: "bg-[var(--success)]/10 text-[var(--success)]",
     CANCELLED: "bg-destructive/10 text-destructive",
   };
 
-  // Sort sessions by date, then time
-  const sortedSessions = [...sessions].sort((a, b) => {
+  // Filter sessions
+  const filteredSessions = useMemo(() => {
+    if (selectedCoachId === "ALL") return sessions;
+    return sessions.filter((s) => s.coachId === selectedCoachId);
+  }, [sessions, selectedCoachId]);
+
+  // Sort and group by date
+  const sortedSessions = [...filteredSessions].sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
     return a.startTime.localeCompare(b.startTime);
   });
 
-  // Group by date for visual separation
   const groupedByDate = sortedSessions.reduce<
     Record<string, HomeIntroSession[]>
   >((acc, s) => {
@@ -168,22 +152,45 @@ export default function HomeIntroPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Schedule Home Intro sessions for participants. Each session is 3 hours
-          long.
+          long. {PARTICIPANTS.length} participants across {COACHES.length}{" "}
+          coaches.
         </p>
       </div>
 
-      {/* Summary */}
-      <div className="mb-6 flex flex-wrap gap-3">
+      {/* Summary + filter */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
         <Badge variant="secondary">
           <CalendarDays className="mr-1 size-3" />
-          {sessions.length} Session{sessions.length !== 1 ? "s" : ""}
+          {filteredSessions.length} Session
+          {filteredSessions.length !== 1 ? "s" : ""}
         </Badge>
         <Badge variant="secondary" className="bg-primary/10 text-primary">
-          {sessions.filter((s) => s.status === "SCHEDULED").length} Upcoming
+          {filteredSessions.filter((s) => s.status === "SCHEDULED").length}{" "}
+          Upcoming
         </Badge>
-        <Badge variant="secondary" className="bg-success/10 text-success">
-          {sessions.filter((s) => s.status === "COMPLETED").length} Completed
+        <Badge
+          variant="secondary"
+          className="bg-[var(--success)]/10 text-[var(--success)]"
+        >
+          {filteredSessions.filter((s) => s.status === "COMPLETED").length}{" "}
+          Completed
         </Badge>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Filter className="size-4 text-muted-foreground" />
+          <select
+            value={selectedCoachId}
+            onChange={(e) => setSelectedCoachId(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          >
+            <option value="ALL">All Coaches ({COACHES.length})</option>
+            {COACHES.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} ({getCoachPPs(c.id).length} PPs)
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Schedule new session */}
@@ -191,13 +198,34 @@ export default function HomeIntroPage() {
         <CardHeader>
           <CardTitle className="text-base">Schedule New Session</CardTitle>
           <CardDescription>
-            Select a participant, date, and start time. End time is
-            automatically set to +3 hours.
+            Select a coach, then their participant, date, and start time.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap items-end gap-4">
-            {/* Participant select */}
+            {/* Coach select */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Coach
+              </label>
+              <select
+                value={newCoachId}
+                onChange={(e) => {
+                  setNewCoachId(e.target.value);
+                  setNewPpId("");
+                }}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+              >
+                <option value="">Select Coach...</option>
+                {COACHES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* PP select -- filtered by coach */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Participant
@@ -205,10 +233,13 @@ export default function HomeIntroPage() {
               <select
                 value={newPpId}
                 onChange={(e) => setNewPpId(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+                disabled={!newCoachId}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground disabled:opacity-50"
               >
-                <option value="">Select PP...</option>
-                {MOCK_PPS.map((pp) => (
+                <option value="">
+                  {newCoachId ? "Select PP..." : "Select coach first"}
+                </option>
+                {formPPs.map((pp) => (
                   <option key={pp.id} value={pp.id}>
                     {pp.name} ({pp.id})
                   </option>
@@ -264,7 +295,8 @@ export default function HomeIntroPage() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Home className="mb-4 size-10 text-muted-foreground" />
             <h3 className="text-lg font-semibold text-foreground">
-              No sessions scheduled
+              No sessions{selectedCoachId !== "ALL" ? " for this coach" : ""}{" "}
+              scheduled
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Use the form above to schedule a Home Intro session.
@@ -294,6 +326,9 @@ export default function HomeIntroPage() {
                           Participant
                         </TableHead>
                         <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                          Coach
+                        </TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-widest">
                           Time
                         </TableHead>
                         <TableHead className="text-[10px] font-bold uppercase tracking-widest">
@@ -302,20 +337,23 @@ export default function HomeIntroPage() {
                         <TableHead className="text-[10px] font-bold uppercase tracking-widest">
                           Status
                         </TableHead>
-                        <TableHead className="w-[80px]" />
+                        <TableHead className="w-[60px]" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {dateSessions.map((session) => {
-                        const pp = MOCK_PPS.find(
+                        const pp = PARTICIPANTS.find(
                           (p) => p.id === session.ppId
+                        );
+                        const coach = COACHES.find(
+                          (c) => c.id === session.coachId
                         );
                         return (
                           <TableRow key={session.id}>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                                  <User className="size-3.5" />
+                                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
+                                  <User className="size-3" />
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium text-foreground">
@@ -327,11 +365,13 @@ export default function HomeIntroPage() {
                                 </div>
                               </div>
                             </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {coach?.name ?? session.coachId}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5 text-sm">
                                 <Clock className="size-3.5 text-muted-foreground" />
-                                {session.startTime} &ndash;{" "}
-                                {session.endTime}
+                                {session.startTime} &ndash; {session.endTime}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -340,15 +380,10 @@ export default function HomeIntroPage() {
                               </span>
                             </TableCell>
                             <TableCell>
-                              <button
-                                onClick={() => toggleStatus(session.id)}
-                                className="cursor-pointer"
-                              >
+                              <button onClick={() => toggleStatus(session.id)}>
                                 <Badge
                                   variant="secondary"
-                                  className={
-                                    statusColor[session.status]
-                                  }
+                                  className={statusColor[session.status]}
                                 >
                                   {session.status}
                                 </Badge>
@@ -358,15 +393,11 @@ export default function HomeIntroPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() =>
-                                  removeSession(session.id)
-                                }
+                                onClick={() => removeSession(session.id)}
                                 className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                               >
                                 <Trash2 className="size-4" />
-                                <span className="sr-only">
-                                  Remove session
-                                </span>
+                                <span className="sr-only">Remove</span>
                               </Button>
                             </TableCell>
                           </TableRow>

@@ -27,58 +27,18 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-
-// ── Mock data for preview ──────────────────────────────────────────────
-
-const MOCK_COACHES = [
-  { id: "C001", name: "Somchai T.", email: "somchai@example.com" },
-  { id: "C002", name: "Anurak P.", email: "anurak@example.com" },
-  { id: "C003", name: "Kanya S.", email: "kanya@example.com" },
-  { id: "C004", name: "Preecha L.", email: "preecha@example.com" },
-  { id: "C005", name: "Narong W.", email: "narong@example.com" },
-  { id: "C006", name: "Suda M.", email: "suda@example.com" },
-];
-
-const MOCK_PARTICIPANTS = [
-  { id: "PP001", name: "Areeya K.", mobile: "081-111-1111", coachId: "C001" },
-  { id: "PP002", name: "Boonsri R.", mobile: "081-222-2222", coachId: "C001" },
-  { id: "PP003", name: "Chalerm N.", mobile: "081-333-3333", coachId: "C002" },
-  { id: "PP004", name: "Duangjai F.", mobile: "081-444-4444", coachId: "C002" },
-  { id: "PP005", name: "Ekachai V.", mobile: "081-555-5555", coachId: "C003" },
-  { id: "PP006", name: "Fongchan B.", mobile: "081-666-6666", coachId: "C003" },
-  { id: "PP007", name: "Gamon S.", mobile: "081-777-7777", coachId: "C004" },
-  { id: "PP008", name: "Hansa D.", mobile: "081-888-8888", coachId: "C005" },
-  { id: "PP009", name: "Issara J.", mobile: "081-999-9999", coachId: "C005" },
-  { id: "PP010", name: "Jutarat P.", mobile: "082-000-0000", coachId: "C006" },
-];
-
-interface Group {
-  id: string;
-  name: string;
-  leaderId: string; // Coach Group Leader
-  coachIds: string[];
-}
+import {
+  COACHES,
+  PARTICIPANTS,
+  DEFAULT_GROUPS,
+  getCoachPPs,
+  type MockGroup,
+} from "@/lib/mock-data";
 
 export default function GroupsPage() {
-  const [groups, setGroups] = useState<Group[]>([
-    {
-      id: "G1",
-      name: "Alpha Team",
-      leaderId: "C001",
-      coachIds: ["C001", "C002"],
-    },
-    {
-      id: "G2",
-      name: "Beta Team",
-      leaderId: "C003",
-      coachIds: ["C003", "C004"],
-    },
-  ]);
+  const [groups, setGroups] = useState<MockGroup[]>(DEFAULT_GROUPS);
   const [expandedGroup, setExpandedGroup] = useState<string | null>("G1");
   const [newGroupName, setNewGroupName] = useState("");
-
-  const coaches = MOCK_COACHES;
-  const participants = MOCK_PARTICIPANTS;
 
   function addGroup() {
     if (!newGroupName.trim()) return;
@@ -112,22 +72,22 @@ export default function GroupsPage() {
 
   function setLeader(groupId: string, coachId: string) {
     setGroups(
-      groups.map((g) => {
-        if (g.id !== groupId) return g;
-        return { ...g, leaderId: coachId };
-      })
+      groups.map((g) =>
+        g.id !== groupId ? g : { ...g, leaderId: coachId }
+      )
     );
   }
 
-  function getCoachPPs(coachId: string) {
-    return participants.filter((p) => p.coachId === coachId);
-  }
-
-  // Coaches already assigned to any group
   const assignedCoachIds = new Set(groups.flatMap((g) => g.coachIds));
-  const unassignedCoaches = coaches.filter(
+  const unassignedCoaches = COACHES.filter(
     (c) => !assignedCoachIds.has(c.id)
   );
+  const totalAssignedPPs = groups.reduce((sum, g) => {
+    return (
+      sum +
+      g.coachIds.reduce((s, cid) => s + getCoachPPs(cid).length, 0)
+    );
+  }, 0);
 
   return (
     <div className="p-6 lg:p-8">
@@ -137,8 +97,8 @@ export default function GroupsPage() {
           Group Management
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Organize Coaches and Participants into groups. Each group has a Coach
-          Group Leader.
+          Organize {COACHES.length} Coaches and {PARTICIPANTS.length}{" "}
+          Participants into groups. Each group has a Coach Group Leader.
         </p>
       </div>
 
@@ -146,17 +106,20 @@ export default function GroupsPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <Badge variant="secondary">
           <UsersRound className="mr-1 size-3" />
-          {coaches.length} Coaches
+          {COACHES.length} Coaches
         </Badge>
         <Badge variant="secondary">
           <UserCheck className="mr-1 size-3" />
-          {participants.length} Participants
+          {PARTICIPANTS.length} Participants
         </Badge>
         <Badge variant="secondary">
           {groups.length} Group{groups.length !== 1 ? "s" : ""}
         </Badge>
+        <Badge variant="secondary">
+          {totalAssignedPPs}/{PARTICIPANTS.length} PPs in groups
+        </Badge>
         {unassignedCoaches.length > 0 && (
-          <Badge variant="secondary" className="bg-warning/10 text-warning">
+          <Badge variant="secondary" className="bg-[var(--warning)]/10 text-[var(--warning)]">
             {unassignedCoaches.length} Unassigned Coach
             {unassignedCoaches.length !== 1 ? "es" : ""}
           </Badge>
@@ -186,11 +149,11 @@ export default function GroupsPage() {
       <div className="flex flex-col gap-4">
         {groups.map((group) => {
           const isExpanded = expandedGroup === group.id;
-          const groupCoaches = coaches.filter((c) =>
+          const groupCoaches = COACHES.filter((c) =>
             group.coachIds.includes(c.id)
           );
-          const leader = coaches.find((c) => c.id === group.leaderId);
-          const groupPPs = participants.filter((p) =>
+          const leader = COACHES.find((c) => c.id === group.leaderId);
+          const groupPPs = PARTICIPANTS.filter((p) =>
             group.coachIds.includes(p.coachId)
           );
 
@@ -210,11 +173,13 @@ export default function GroupsPage() {
                       <ChevronRight className="size-4 text-muted-foreground" />
                     )}
                     <div>
-                      <CardTitle className="text-base">{group.name}</CardTitle>
+                      <CardTitle className="text-base">
+                        {group.name}
+                      </CardTitle>
                       <CardDescription>
                         {groupCoaches.length} coach
                         {groupCoaches.length !== 1 ? "es" : ""},{" "}
-                        {groupPPs.length} participant
+                        {groupPPs.length} PP
                         {groupPPs.length !== 1 ? "s" : ""}
                         {leader && (
                           <span>
@@ -245,35 +210,38 @@ export default function GroupsPage() {
 
               {isExpanded && (
                 <CardContent>
-                  {/* Assign coaches */}
+                  {/* Assign coaches -- compact chip grid for 20 coaches */}
                   <div className="mb-4">
                     <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                       Assign Coaches
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {coaches.map((coach) => {
-                        const isInGroup = group.coachIds.includes(coach.id);
+                    <div className="flex flex-wrap gap-1.5">
+                      {COACHES.map((coach) => {
+                        const isInGroup = group.coachIds.includes(
+                          coach.id
+                        );
                         const isInOther =
                           !isInGroup && assignedCoachIds.has(coach.id);
                         return (
                           <button
                             key={coach.id}
                             onClick={() =>
-                              !isInOther && toggleCoach(group.id, coach.id)
+                              !isInOther &&
+                              toggleCoach(group.id, coach.id)
                             }
                             disabled={isInOther}
-                            className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                            className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                               isInGroup
                                 ? "border-primary bg-primary/10 text-primary"
                                 : isInOther
-                                  ? "cursor-not-allowed border-border bg-muted/50 text-muted-foreground opacity-40"
+                                  ? "cursor-not-allowed border-border bg-muted/50 text-muted-foreground opacity-30"
                                   : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
                             }`}
                           >
                             <span className="font-mono text-[10px]">
                               {coach.id}
-                            </span>
-                            <span>{coach.name}</span>
+                            </span>{" "}
+                            {coach.name}
                           </button>
                         );
                       })}
@@ -286,12 +254,14 @@ export default function GroupsPage() {
                       <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                         Coach Group Leader
                       </p>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {groupCoaches.map((coach) => (
                           <button
                             key={coach.id}
-                            onClick={() => setLeader(group.id, coach.id)}
-                            className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                            onClick={() =>
+                              setLeader(group.id, coach.id)
+                            }
+                            className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                               group.leaderId === coach.id
                                 ? "border-primary bg-primary text-primary-foreground"
                                 : "border-border text-muted-foreground hover:border-primary/40"
@@ -304,13 +274,13 @@ export default function GroupsPage() {
                     </div>
                   )}
 
-                  {/* Coaches + their PPs table */}
+                  {/* Coach -> PPs table */}
                   {groupCoaches.length > 0 && (
                     <div className="overflow-x-auto rounded-lg border border-border">
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                            <TableHead className="w-[200px] text-[10px] font-bold uppercase tracking-widest">
                               Coach
                             </TableHead>
                             <TableHead className="text-[10px] font-bold uppercase tracking-widest">
@@ -325,7 +295,7 @@ export default function GroupsPage() {
                               <TableRow key={coach.id}>
                                 <TableCell className="align-top">
                                   <div className="flex items-center gap-2">
-                                    <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground">
                                       {coach.name.charAt(0)}
                                     </div>
                                     <div>
@@ -334,7 +304,7 @@ export default function GroupsPage() {
                                         {group.leaderId === coach.id && (
                                           <Badge
                                             variant="secondary"
-                                            className="ml-2 bg-primary/10 text-primary"
+                                            className="ml-2 bg-primary/10 text-primary text-[10px]"
                                           >
                                             Leader
                                           </Badge>
@@ -348,18 +318,18 @@ export default function GroupsPage() {
                                 </TableCell>
                                 <TableCell>
                                   {pps.length === 0 ? (
-                                    <span className="text-xs text-muted-foreground italic">
+                                    <span className="text-xs italic text-muted-foreground">
                                       No participants assigned
                                     </span>
                                   ) : (
-                                    <div className="flex flex-wrap gap-1.5">
+                                    <div className="flex flex-wrap gap-1">
                                       {pps.map((pp) => (
                                         <span
                                           key={pp.id}
-                                          className="rounded-md bg-muted px-2 py-1 text-xs text-foreground"
+                                          className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-foreground"
                                         >
                                           {pp.name}
-                                          <span className="ml-1 font-mono text-[10px] text-muted-foreground">
+                                          <span className="ml-0.5 font-mono text-[10px] text-muted-foreground">
                                             ({pp.id})
                                           </span>
                                         </span>
@@ -389,7 +359,8 @@ export default function GroupsPage() {
               No groups yet
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Create a group above to start organizing coaches and participants.
+              Create a group above to start organizing coaches and
+              participants.
             </p>
           </CardContent>
         </Card>

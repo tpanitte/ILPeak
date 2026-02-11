@@ -22,26 +22,26 @@ import {
 const STATS = [
   {
     label: "Coaches",
-    value: "6",
-    change: "2 groups configured",
+    value: "20",
+    change: "5 groups, ~4 per group",
     icon: Users,
   },
   {
     label: "Participants",
-    value: "10",
-    change: "All assigned to coaches",
+    value: "40",
+    change: "2 PPs per coach",
     icon: UsersRound,
   },
   {
     label: "This Week GCF",
-    value: "12/20",
-    change: "60% of target",
+    value: "78/200",
+    change: "39% of target",
     icon: TrendingUp,
   },
   {
     label: "Home Intros",
-    value: "3",
-    change: "2 scheduled, 1 completed",
+    value: "6",
+    change: "4 scheduled, 2 completed",
     icon: CalendarDays,
   },
 ];
@@ -82,22 +82,22 @@ const QUICK_ACTIONS = [
 const RECENT_ACTIVITY = [
   {
     action: "Goals Set",
-    detail: "Coach Somchai set GCF target=5, C/O target=20 for 4 PPs",
+    detail: "Coach Somchai set GCF target=5, C/O target=20 for 2 PPs",
     time: "1 hour ago",
   },
   {
     action: "Home Intro Scheduled",
-    detail: "Areeya K. - Feb 14, 10:00-13:00",
+    detail: "Areeya K. (PP001) - Feb 14, 10:00-13:00",
     time: "3 hours ago",
   },
   {
     action: "CSV Imported",
-    detail: "6 coaches and 10 participants uploaded",
+    detail: "20 coaches and 40 participants uploaded",
     time: "1 day ago",
   },
   {
     action: "Group Created",
-    detail: "Alpha Team - Leader: Somchai T., 2 coaches, 4 PPs",
+    detail: "Epsilon Team - Leader: Tanawat H., 4 coaches, 8 PPs",
     time: "1 day ago",
   },
 ];

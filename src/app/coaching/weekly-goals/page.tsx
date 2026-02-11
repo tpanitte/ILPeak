@@ -20,18 +20,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Target,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
   Save,
+  Filter,
 } from "lucide-react";
+import { COACHES, PARTICIPANTS, getCoachPPs } from "@/lib/mock-data";
 
 // ── Date utilities (week starts Saturday) ──────────────────────────────
 
 function getSaturday(date: Date): Date {
   const d = new Date(date);
-  const day = d.getDay(); // 0=Sun ... 6=Sat
+  const day = d.getDay();
   const diff = day === 6 ? 0 : -(day + 1);
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
@@ -48,10 +49,6 @@ function formatShort(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function formatDay(date: Date): string {
-  return date.toLocaleDateString("en-US", { weekday: "short" });
-}
-
 function isToday(date: Date): boolean {
   const now = new Date();
   return (
@@ -61,25 +58,11 @@ function isToday(date: Date): boolean {
   );
 }
 
-function isBeforeToday(date: Date): boolean {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return date < now;
-}
-
-// ── Mock data ──────────────────────────────────────────────────────────
-
-const MOCK_PPS = [
-  { id: "PP001", name: "Areeya K.", coachId: "C001" },
-  { id: "PP002", name: "Boonsri R.", coachId: "C001" },
-  { id: "PP003", name: "Chalerm N.", coachId: "C001" },
-  { id: "PP004", name: "Duangjai F.", coachId: "C001" },
-];
-
 const WEEK_DAYS = ["Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
 interface WeeklyGoal {
   ppId: string;
+  coachId: string;
   gcfTarget: number;
   coTarget: number;
   dailyGCF: (number | null)[];
@@ -88,6 +71,7 @@ interface WeeklyGoal {
 
 export default function WeeklyGoalsPage() {
   const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedCoachId, setSelectedCoachId] = useState<string>("ALL");
 
   const saturdayAnchor = useMemo(() => {
     const sat = getSaturday(new Date());
@@ -101,21 +85,55 @@ export default function WeeklyGoalsPage() {
   const friday = weekDates[6];
   const isCurrentWeek = weekOffset === 0;
 
-  // Determine if goals can still be set (before Monday EOD)
   const now = new Date();
-  const mondayDeadline = addDays(saturdayAnchor, 2); // Monday
+  const mondayDeadline = addDays(saturdayAnchor, 2);
   mondayDeadline.setHours(23, 59, 59, 999);
   const goalsLocked = now > mondayDeadline && isCurrentWeek;
 
-  const [goals, setGoals] = useState<WeeklyGoal[]>(
-    MOCK_PPS.map((pp) => ({
+  // Initialize goals for ALL 40 PPs
+  const [goals, setGoals] = useState<WeeklyGoal[]>(() =>
+    PARTICIPANTS.map((pp) => ({
       ppId: pp.id,
+      coachId: pp.coachId,
       gcfTarget: 5,
       coTarget: 20,
-      dailyGCF: [2, 1, null, null, null, null, null],
-      dailyCO: [8, 5, null, null, null, null, null],
+      dailyGCF: [
+        Math.floor(Math.random() * 3),
+        Math.floor(Math.random() * 3),
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+      dailyCO: [
+        Math.floor(Math.random() * 8) + 2,
+        Math.floor(Math.random() * 8) + 2,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
     }))
   );
+
+  // Filter by coach
+  const filteredGoals = useMemo(() => {
+    if (selectedCoachId === "ALL") return goals;
+    return goals.filter((g) => g.coachId === selectedCoachId);
+  }, [goals, selectedCoachId]);
+
+  // Group by coach for the display
+  const goalsByCoach = useMemo(() => {
+    const map = new Map<string, WeeklyGoal[]>();
+    filteredGoals.forEach((g) => {
+      const arr = map.get(g.coachId) || [];
+      arr.push(g);
+      map.set(g.coachId, arr);
+    });
+    return map;
+  }, [filteredGoals]);
 
   function updateGoal(
     ppId: string,
@@ -123,9 +141,7 @@ export default function WeeklyGoalsPage() {
     value: number
   ) {
     setGoals(
-      goals.map((g) =>
-        g.ppId === ppId ? { ...g, [field]: value } : g
-      )
+      goals.map((g) => (g.ppId === ppId ? { ...g, [field]: value } : g))
     );
   }
 
@@ -163,13 +179,22 @@ export default function WeeklyGoalsPage() {
           Weekly Goals
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Set weekly targets and track daily results for each participant. Week
-          runs Saturday to Friday.
+          Set weekly targets and track daily results. Week runs Saturday to
+          Friday. Showing{" "}
+          <span className="font-semibold text-foreground">
+            {filteredGoals.length}
+          </span>{" "}
+          participants across{" "}
+          <span className="font-semibold text-foreground">
+            {goalsByCoach.size}
+          </span>{" "}
+          coach{goalsByCoach.size !== 1 ? "es" : ""}.
         </p>
       </div>
 
-      {/* Week navigation */}
+      {/* Controls bar */}
       <div className="mb-6 flex flex-wrap items-center gap-4">
+        {/* Week navigation */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -191,6 +216,7 @@ export default function WeeklyGoalsPage() {
             <ChevronRight className="size-4" />
           </Button>
         </div>
+
         {isCurrentWeek && (
           <Badge variant="secondary" className="bg-primary/10 text-primary">
             Current Week
@@ -202,225 +228,255 @@ export default function WeeklyGoalsPage() {
             Goals locked (past Monday)
           </Badge>
         )}
+
+        {/* Coach filter */}
+        <div className="ml-auto flex items-center gap-2">
+          <Filter className="size-4 text-muted-foreground" />
+          <select
+            value={selectedCoachId}
+            onChange={(e) => setSelectedCoachId(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          >
+            <option value="ALL">All Coaches ({COACHES.length})</option>
+            {COACHES.map((c) => {
+              const ppCount = getCoachPPs(c.id).length;
+              return (
+                <option key={c.id} value={c.id}>
+                  {c.name} ({ppCount} PPs)
+                </option>
+              );
+            })}
+          </select>
+        </div>
       </div>
 
-      {/* GCF Table */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-base">
-            Guest Confirmed (GCF)
-          </CardTitle>
-          <CardDescription>
-            Set weekly GCF target and enter daily results
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[160px] text-[10px] font-bold uppercase tracking-widest">
-                    Participant
-                  </TableHead>
-                  <TableHead className="w-[80px] bg-primary/5 text-center text-[10px] font-bold uppercase tracking-widest text-primary">
-                    Target
-                  </TableHead>
-                  {weekDates.map((date, i) => (
-                    <TableHead
-                      key={i}
-                      className={`w-[70px] text-center text-[10px] font-bold uppercase tracking-widest ${isToday(date) ? "bg-primary/10 text-primary" : ""}`}
-                    >
-                      <div>{WEEK_DAYS[i]}</div>
-                      <div className="font-mono font-normal text-muted-foreground">
-                        {date.getDate()}
-                      </div>
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-[70px] text-center text-[10px] font-bold uppercase tracking-widest">
-                    Total
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {goals.map((goal) => {
-                  const pp = MOCK_PPS.find((p) => p.id === goal.ppId)!;
-                  const total = getTotal(goal.dailyGCF);
-                  const onTrack = total >= goal.gcfTarget;
-                  return (
-                    <TableRow key={goal.ppId}>
-                      <TableCell>
-                        <div className="text-sm font-medium text-foreground">
-                          {pp.name}
-                        </div>
-                        <div className="font-mono text-[10px] text-muted-foreground">
-                          {pp.id}
-                        </div>
-                      </TableCell>
-                      <TableCell className="bg-primary/5 p-1.5">
-                        <Input
-                          type="number"
-                          min={0}
-                          value={goal.gcfTarget}
-                          onChange={(e) =>
-                            updateGoal(
-                              goal.ppId,
-                              "gcfTarget",
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          disabled={goalsLocked}
-                          className="h-8 text-center font-bold"
-                        />
-                      </TableCell>
-                      {weekDates.map((date, i) => {
-                        const canEdit =
-                          isToday(date) || (isBeforeToday(date) && !isBeforeToday(addDays(date, -1)));
-                        return (
-                          <TableCell
-                            key={i}
-                            className={`p-1.5 ${isToday(date) ? "bg-primary/5" : ""}`}
-                          >
+      {/* Grouped by coach */}
+      {Array.from(goalsByCoach.entries()).map(([coachId, coachGoals]) => {
+        const coach = COACHES.find((c) => c.id === coachId);
+        return (
+          <Card key={coachId} className="mb-6">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {coach?.name.charAt(0) ?? "?"}
+                </div>
+                <div>
+                  <CardTitle className="text-base">
+                    {coach?.name ?? coachId}
+                  </CardTitle>
+                  <CardDescription>
+                    {coachGoals.length} participant
+                    {coachGoals.length !== 1 ? "s" : ""} &middot; {coachId}
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {/* GCF sub-table */}
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Guest Confirmed (GCF)
+              </p>
+              <div className="mb-4 overflow-x-auto rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[140px] text-[10px] font-bold uppercase tracking-widest">
+                        PP
+                      </TableHead>
+                      <TableHead className="w-[72px] bg-primary/5 text-center text-[10px] font-bold uppercase tracking-widest text-primary">
+                        Target
+                      </TableHead>
+                      {weekDates.map((date, i) => (
+                        <TableHead
+                          key={i}
+                          className={`w-[60px] text-center text-[10px] font-bold uppercase tracking-widest ${isToday(date) ? "bg-primary/10 text-primary" : ""}`}
+                        >
+                          <div>{WEEK_DAYS[i]}</div>
+                          <div className="font-mono font-normal text-muted-foreground">
+                            {date.getDate()}
+                          </div>
+                        </TableHead>
+                      ))}
+                      <TableHead className="w-[60px] text-center text-[10px] font-bold uppercase tracking-widest">
+                        Total
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {coachGoals.map((goal) => {
+                      const pp = PARTICIPANTS.find(
+                        (p) => p.id === goal.ppId
+                      )!;
+                      const total = getTotal(goal.dailyGCF);
+                      const onTrack = total >= goal.gcfTarget;
+                      return (
+                        <TableRow key={goal.ppId}>
+                          <TableCell>
+                            <div className="text-sm font-medium text-foreground">
+                              {pp.name}
+                            </div>
+                            <div className="font-mono text-[10px] text-muted-foreground">
+                              {pp.id}
+                            </div>
+                          </TableCell>
+                          <TableCell className="bg-primary/5 p-1">
                             <Input
                               type="number"
                               min={0}
-                              value={goal.dailyGCF[i] ?? ""}
+                              value={goal.gcfTarget}
                               onChange={(e) =>
-                                updateDaily(
+                                updateGoal(
                                   goal.ppId,
-                                  i,
-                                  "gcf",
-                                  e.target.value
-                                    ? parseInt(e.target.value)
-                                    : null
+                                  "gcfTarget",
+                                  parseInt(e.target.value) || 0
                                 )
                               }
-                              placeholder="-"
-                              className="h-8 w-14 text-center p-0"
+                              disabled={goalsLocked}
+                              className="h-7 text-center text-xs font-bold"
                             />
                           </TableCell>
-                        );
-                      })}
-                      <TableCell className="text-center">
-                        <span
-                          className={`font-mono text-sm font-bold ${onTrack ? "text-success" : "text-warning"}`}
-                        >
-                          {total}
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                          {weekDates.map((date, i) => (
+                            <TableCell
+                              key={i}
+                              className={`p-1 ${isToday(date) ? "bg-primary/5" : ""}`}
+                            >
+                              <Input
+                                type="number"
+                                min={0}
+                                value={goal.dailyGCF[i] ?? ""}
+                                onChange={(e) =>
+                                  updateDaily(
+                                    goal.ppId,
+                                    i,
+                                    "gcf",
+                                    e.target.value
+                                      ? parseInt(e.target.value)
+                                      : null
+                                  )
+                                }
+                                placeholder="-"
+                                className="h-7 w-12 p-0 text-center text-xs"
+                              />
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-center">
+                            <span
+                              className={`font-mono text-xs font-bold ${onTrack ? "text-[var(--success)]" : "text-[var(--warning)]"}`}
+                            >
+                              {total}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
 
-      {/* C/O Table */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-base">Call Out (C/O)</CardTitle>
-          <CardDescription>
-            Set weekly C/O target and enter daily results
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[160px] text-[10px] font-bold uppercase tracking-widest">
-                    Participant
-                  </TableHead>
-                  <TableHead className="w-[80px] bg-primary/5 text-center text-[10px] font-bold uppercase tracking-widest text-primary">
-                    Target
-                  </TableHead>
-                  {weekDates.map((date, i) => (
-                    <TableHead
-                      key={i}
-                      className={`w-[70px] text-center text-[10px] font-bold uppercase tracking-widest ${isToday(date) ? "bg-primary/10 text-primary" : ""}`}
-                    >
-                      <div>{WEEK_DAYS[i]}</div>
-                      <div className="font-mono font-normal text-muted-foreground">
-                        {date.getDate()}
-                      </div>
-                    </TableHead>
-                  ))}
-                  <TableHead className="w-[70px] text-center text-[10px] font-bold uppercase tracking-widest">
-                    Total
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {goals.map((goal) => {
-                  const pp = MOCK_PPS.find((p) => p.id === goal.ppId)!;
-                  const total = getTotal(goal.dailyCO);
-                  const onTrack = total >= goal.coTarget;
-                  return (
-                    <TableRow key={goal.ppId}>
-                      <TableCell>
-                        <div className="text-sm font-medium text-foreground">
-                          {pp.name}
-                        </div>
-                        <div className="font-mono text-[10px] text-muted-foreground">
-                          {pp.id}
-                        </div>
-                      </TableCell>
-                      <TableCell className="bg-primary/5 p-1.5">
-                        <Input
-                          type="number"
-                          min={0}
-                          value={goal.coTarget}
-                          onChange={(e) =>
-                            updateGoal(
-                              goal.ppId,
-                              "coTarget",
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          disabled={goalsLocked}
-                          className="h-8 text-center font-bold"
-                        />
-                      </TableCell>
+              {/* C/O sub-table */}
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Call Out (C/O)
+              </p>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[140px] text-[10px] font-bold uppercase tracking-widest">
+                        PP
+                      </TableHead>
+                      <TableHead className="w-[72px] bg-primary/5 text-center text-[10px] font-bold uppercase tracking-widest text-primary">
+                        Target
+                      </TableHead>
                       {weekDates.map((date, i) => (
-                        <TableCell
+                        <TableHead
                           key={i}
-                          className={`p-1.5 ${isToday(date) ? "bg-primary/5" : ""}`}
+                          className={`w-[60px] text-center text-[10px] font-bold uppercase tracking-widest ${isToday(date) ? "bg-primary/10 text-primary" : ""}`}
                         >
-                          <Input
-                            type="number"
-                            min={0}
-                            value={goal.dailyCO[i] ?? ""}
-                            onChange={(e) =>
-                              updateDaily(
-                                goal.ppId,
-                                i,
-                                "co",
-                                e.target.value
-                                  ? parseInt(e.target.value)
-                                  : null
-                              )
-                            }
-                            placeholder="-"
-                            className="h-8 w-14 text-center p-0"
-                          />
-                        </TableCell>
+                          <div>{WEEK_DAYS[i]}</div>
+                          <div className="font-mono font-normal text-muted-foreground">
+                            {date.getDate()}
+                          </div>
+                        </TableHead>
                       ))}
-                      <TableCell className="text-center">
-                        <span
-                          className={`font-mono text-sm font-bold ${onTrack ? "text-success" : "text-warning"}`}
-                        >
-                          {total}
-                        </span>
-                      </TableCell>
+                      <TableHead className="w-[60px] text-center text-[10px] font-bold uppercase tracking-widest">
+                        Total
+                      </TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {coachGoals.map((goal) => {
+                      const pp = PARTICIPANTS.find(
+                        (p) => p.id === goal.ppId
+                      )!;
+                      const total = getTotal(goal.dailyCO);
+                      const onTrack = total >= goal.coTarget;
+                      return (
+                        <TableRow key={goal.ppId}>
+                          <TableCell>
+                            <div className="text-sm font-medium text-foreground">
+                              {pp.name}
+                            </div>
+                            <div className="font-mono text-[10px] text-muted-foreground">
+                              {pp.id}
+                            </div>
+                          </TableCell>
+                          <TableCell className="bg-primary/5 p-1">
+                            <Input
+                              type="number"
+                              min={0}
+                              value={goal.coTarget}
+                              onChange={(e) =>
+                                updateGoal(
+                                  goal.ppId,
+                                  "coTarget",
+                                  parseInt(e.target.value) || 0
+                                )
+                              }
+                              disabled={goalsLocked}
+                              className="h-7 text-center text-xs font-bold"
+                            />
+                          </TableCell>
+                          {weekDates.map((date, i) => (
+                            <TableCell
+                              key={i}
+                              className={`p-1 ${isToday(date) ? "bg-primary/5" : ""}`}
+                            >
+                              <Input
+                                type="number"
+                                min={0}
+                                value={goal.dailyCO[i] ?? ""}
+                                onChange={(e) =>
+                                  updateDaily(
+                                    goal.ppId,
+                                    i,
+                                    "co",
+                                    e.target.value
+                                      ? parseInt(e.target.value)
+                                      : null
+                                  )
+                                }
+                                placeholder="-"
+                                className="h-7 w-12 p-0 text-center text-xs"
+                              />
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-center">
+                            <span
+                              className={`font-mono text-xs font-bold ${onTrack ? "text-[var(--success)]" : "text-[var(--warning)]"}`}
+                            >
+                              {total}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {/* Save */}
       <div className="flex justify-end">
