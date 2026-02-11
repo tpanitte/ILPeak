@@ -23,7 +23,7 @@ const STATS = [
   {
     label: "Coaches",
     value: "20",
-    change: "5 groups, ~4 per group",
+    change: "4 groups, 5 per group",
     icon: Users,
   },
   {
@@ -97,7 +97,7 @@ const RECENT_ACTIVITY = [
   },
   {
     action: "Group Created",
-    detail: "Epsilon Team - Leader: Tanawat H., 4 coaches, 8 PPs",
+    detail: "Delta Team - Leader: Supansa G., 5 coaches, 10 PPs",
     time: "1 day ago",
   },
 ];

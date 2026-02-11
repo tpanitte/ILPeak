@@ -1,6 +1,6 @@
 // Shared mock data reflecting realistic scale:
 // 1 Program = 40 PPs, ~20 Coaches, 1 Coach = 2 PPs
-// Coaches grouped into ~5 groups, each with a Coach Group Leader
+// Coaches grouped into 4 groups (~5 coaches per group), each with a Coach Group Leader
 
 export interface MockCoach {
   id: string;
@@ -89,11 +89,10 @@ export const PARTICIPANTS: MockParticipant[] = [
 ];
 
 export const DEFAULT_GROUPS: MockGroup[] = [
-  { id: "G1", name: "Alpha Team", leaderId: "C001", coachIds: ["C001", "C002", "C003", "C004"] },
-  { id: "G2", name: "Beta Team", leaderId: "C005", coachIds: ["C005", "C006", "C007", "C008"] },
-  { id: "G3", name: "Gamma Team", leaderId: "C009", coachIds: ["C009", "C010", "C011", "C012"] },
-  { id: "G4", name: "Delta Team", leaderId: "C013", coachIds: ["C013", "C014", "C015", "C016"] },
-  { id: "G5", name: "Epsilon Team", leaderId: "C017", coachIds: ["C017", "C018", "C019", "C020"] },
+  { id: "G1", name: "Alpha Team", leaderId: "C001", coachIds: ["C001", "C002", "C003", "C004", "C005"] },
+  { id: "G2", name: "Beta Team", leaderId: "C006", coachIds: ["C006", "C007", "C008", "C009", "C010"] },
+  { id: "G3", name: "Gamma Team", leaderId: "C011", coachIds: ["C011", "C012", "C013", "C014", "C015"] },
+  { id: "G4", name: "Delta Team", leaderId: "C016", coachIds: ["C016", "C017", "C018", "C019", "C020"] },
 ];
 
 export function getCoachPPs(coachId: string): MockParticipant[] {
