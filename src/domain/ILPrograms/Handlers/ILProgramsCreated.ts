@@ -8,7 +8,7 @@ export const ILProgramsCreatedHandler: IEventHandler<IILProgramsCreatedEvent> = 
   name: "ILProgramsCreated",
   handle: async (event: IILProgramsCreatedEvent): Promise<void> => {
     const db = await connectAppDatabase();
-    const collection = db.collection<{ _id: string } & any>("programs_view");
+    const collection = db.collection<{ _id: string; } & any>("programs_view");
 
     const p = event.payloads;
 
@@ -23,8 +23,8 @@ export const ILProgramsCreatedHandler: IEventHandler<IILProgramsCreatedEvent> = 
     ].map(d => new Date(d)).sort((a, b) => a.getTime() - b.getTime());
 
     // 2. Transform: Create the Read Model Document
-    const readModel = {
-      _id: event.aggregateID, //
+    const data = {
+      _id: event.aggregateID,
       serie: p.serie,
       name: `ILP ${p.serie}`,
       classroomDay: p.classroomDay,
@@ -48,8 +48,8 @@ export const ILProgramsCreatedHandler: IEventHandler<IILProgramsCreatedEvent> = 
     // We use aggregateID as the primary key for fast lookups
     await collection.updateOne(
       { _id: event.aggregateID },
-      { $set: readModel },
+      { $set: data },
       { upsert: true }
     );
   },
-}
+};
