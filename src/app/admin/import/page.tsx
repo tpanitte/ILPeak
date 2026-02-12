@@ -34,15 +34,15 @@ import {
 
 // ---------- Types ----------
 interface Coach {
-  "Coach ID": string;
-  "Coach Name": string;
-  "Coach Email": string;
+  ID: string;
+  Name: string;
+  Email: string;
 }
 
 interface Participant {
-  "PP ID": string;
-  "PP Name": string;
-  "PP Mobile": string;
+  ID: string;
+  Name: string;
+  Mobile: string;
   "Coach ID": string;
 }
 
@@ -202,9 +202,9 @@ export default function ImportPage() {
 
       try {
         await importCoachAction(selectedProgram._id, {
-          coachID: coaches[i]["Coach ID"],
-          name: coaches[i]["Coach Name"],
-          email: coaches[i]["Coach Email"],
+          coachID: coaches[i].ID,
+          name: coaches[i].Name,
+          email: coaches[i].Email,
         });
         setCoachStatuses((prev) => {
           const next = [...prev];
@@ -230,8 +230,8 @@ export default function ImportPage() {
 
       try {
         await importParticipantAction(selectedProgram._id, {
-          ppID: participants[i]["PP ID"],
-          name: participants[i]["PP Name"],
+          ppID: participants[i].ID,
+          name: participants[i].Name,
           coachID: participants[i]["Coach ID"],
         });
         setPpStatuses((prev) => {
@@ -372,7 +372,7 @@ export default function ImportPage() {
                       #
                     </TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest">
-                      Coach ID
+                      ID
                     </TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest">
                       Name
@@ -401,13 +401,13 @@ export default function ImportPage() {
                         {i + 1}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
-                        {c["Coach ID"]}
+                        {c.ID}
                       </TableCell>
                       <TableCell className="text-sm font-medium">
-                        {c["Coach Name"]}
+                        {c.Name}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {c["Coach Email"]}
+                        {c.Email}
                       </TableCell>
                       <TableCell>{statusBadge(coachStatuses[i])}</TableCell>
                     </TableRow>
@@ -452,7 +452,7 @@ export default function ImportPage() {
                       #
                     </TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest">
-                      PP ID
+                      ID
                     </TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest">
                       Name
@@ -484,13 +484,13 @@ export default function ImportPage() {
                         {i + 1}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
-                        {p["PP ID"]}
+                        {p.ID}
                       </TableCell>
                       <TableCell className="text-sm font-medium">
-                        {p["PP Name"]}
+                        {p.Name}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {p["PP Mobile"]}
+                        {p.Mobile}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
                         {p["Coach ID"]}
