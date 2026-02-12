@@ -32,6 +32,12 @@ const NAV_SECTIONS = [
     ],
   },
   {
+    label: "Management",
+    items: [
+      { href: "/management/roster", label: "Coaches & PPs", icon: UsersRound },
+    ],
+  },
+  {
     label: "Coaching",
     items: [
       { href: "/coaching/weekly-goals", label: "Weekly Goals", icon: Target },
