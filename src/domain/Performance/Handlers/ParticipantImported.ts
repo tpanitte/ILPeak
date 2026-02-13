@@ -16,6 +16,7 @@ export const ParticipantImportedHandler: IEventHandler<IParticipantImportedEvent
       _id: event.aggregateID,
       ppID: p.ppID,
       name: p.name,
+      mobile: (p as Record<string, unknown>).mobile ?? "",
       coachID: p.coachID,
       programId: event._metadata?.programId,
       _version: event._version,

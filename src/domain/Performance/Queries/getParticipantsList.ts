@@ -4,6 +4,7 @@ export interface ParticipantListItem {
   _id: string;
   ppID: string;
   name: string;
+  mobile: string;
   coachID: string;
   programId?: string;
 }
@@ -21,6 +22,7 @@ export async function getParticipantsList(): Promise<ParticipantListItem[]> {
     _id: p._id.toString(),
     ppID: p.ppID,
     name: p.name,
+    mobile: p.mobile ?? "",
     coachID: p.coachID,
     programId: p.programId,
   })) as ParticipantListItem[];
