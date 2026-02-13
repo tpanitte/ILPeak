@@ -14,6 +14,7 @@ export interface ImportCoachRow {
 export interface ImportParticipantRow {
   ppID: string;
   name: string;
+  mobile: string;
   coachID: string;
 }
 
@@ -63,6 +64,7 @@ export async function importParticipantAction(
     payloads: {
       ppID: row.ppID,
       name: row.name,
+      mobile: row.mobile,
       coachID: row.coachID,
     },
     _metadata: {

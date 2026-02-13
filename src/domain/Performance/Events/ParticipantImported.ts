@@ -7,6 +7,7 @@ const EventName = "ParticipantImported";
 export interface IParticipantImportedEvent extends IEvent<{
   ppID: string;
   name: string;
+  mobile: string;
   coachID: string; // The link to the Coach
 }> { }
 

@@ -232,6 +232,7 @@ export default function ImportPage() {
         await importParticipantAction(selectedProgram._id, {
           ppID: participants[i].ID,
           name: participants[i].Name,
+          mobile: participants[i].Mobile ?? "",
           coachID: participants[i]["Coach ID"],
         });
         setPpStatuses((prev) => {
