@@ -1,1 +1,0 @@
-export { ParticipantsImportedHandler } from "./ParticipantsImported";
