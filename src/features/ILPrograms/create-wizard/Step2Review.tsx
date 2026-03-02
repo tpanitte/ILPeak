@@ -128,7 +128,7 @@ export function Step2Review({ sessions: initialSessions, onCreate, onBack, isSub
       </div>
 
       {/* List / Table View */}
-      <div className="bg-white dark:bg-zinc-950">
+      <div className="bg-card">
         <div className="grid grid-cols-12 gap-4 px-6 py-3 border-b text-xs font-semibold uppercase text-muted-foreground tracking-wider bg-muted/20">
           <div className="col-span-4 md:col-span-3">Session Name</div>
           <div className="col-span-3 md:col-span-2">Date</div>
@@ -147,13 +147,13 @@ export function Step2Review({ sessions: initialSessions, onCreate, onBack, isSub
               // Styling classes
               const rowClass = cn(
                 "grid grid-cols-12 gap-4 px-6 py-3 items-center text-sm transition-colors hover:bg-muted/30",
-                isWeekend ? "bg-blue-50/80 dark:bg-blue-900/10" : "", // Blue rows for weekends
-                isPreClass ? "bg-indigo-50/80 dark:bg-indigo-900/10" : ""
+                isWeekend ? "bg-blue-50/80" : "",
+                isPreClass ? "bg-indigo-50/80" : ""
               );
 
               const textClass = cn(
                 "font-medium",
-                isWeekend ? "text-blue-700 dark:text-blue-300" : "text-foreground"
+                isWeekend ? "text-blue-700" : "text-foreground"
               );
 
               return (
