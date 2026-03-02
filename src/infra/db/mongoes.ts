@@ -6,7 +6,7 @@ import clientPromise from "./mongodb";
 
 export class MongoEventStore implements IEventStore {
   private collectionName = "Events";
-  private dbName = process.env.MONGODB_EVENTS_DB ?? "ILPeak_Events_Dev";
+  private dbName = process.env.MONGODB_EVENTS_DB ?? "ILP_Events_Dev";
   private isInitialized = false;
 
   private async getDB() {

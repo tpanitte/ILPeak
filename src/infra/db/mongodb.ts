@@ -4,7 +4,7 @@ import { MongoClient } from "mongodb";
 
 const uri = process.env.MONGODB_URI ?? "mongodb://localhost:27017";
 const options = {};
-const AppDatabaseName = process.env.MONGODB_APP_DB ?? "ILPeak_App_Dev";
+const AppDatabaseName = process.env.MONGODB_APP_DB ?? "ILP_App_Dev";
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
