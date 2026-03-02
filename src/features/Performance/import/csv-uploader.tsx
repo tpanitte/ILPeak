@@ -12,7 +12,7 @@ interface CSVUploaderProps {
 const CSV_FIELDS: Record<string, { label: string; columns: string[] }> = {
   COACH: {
     label: "Coaches",
-    columns: ["ID", "Name", "Email"],
+    columns: ["ID", "Name", "Email", "Mobile"],
   },
   PP: {
     label: "Participants (PP)",

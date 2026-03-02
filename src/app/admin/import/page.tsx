@@ -37,6 +37,7 @@ interface Coach {
   ID: string;
   Name: string;
   Email: string;
+  Mobile: string;
 }
 
 interface Participant {
@@ -205,6 +206,7 @@ export default function ImportPage() {
           coachID: coaches[i].ID,
           name: coaches[i].Name,
           email: coaches[i].Email,
+          mobile: coaches[i].Mobile ?? "",
         });
         setCoachStatuses((prev) => {
           const next = [...prev];
@@ -381,6 +383,9 @@ export default function ImportPage() {
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest">
                       Email
                     </TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                      Mobile
+                    </TableHead>
                     <TableHead className="w-10 text-[10px] font-bold uppercase tracking-widest">
                       Status
                     </TableHead>
@@ -409,6 +414,9 @@ export default function ImportPage() {
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {c.Email}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {c.Mobile || "-"}
                       </TableCell>
                       <TableCell>{statusBadge(coachStatuses[i])}</TableCell>
                     </TableRow>

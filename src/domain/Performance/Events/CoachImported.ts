@@ -8,6 +8,7 @@ export interface ICoachImportedEvent extends IEvent<{
   coachID: string;
   name: string;
   email: string;
+  mobile: string;
 }> {}
 
 export const importCoach = EventBuilder<ICoachImportedEvent>({

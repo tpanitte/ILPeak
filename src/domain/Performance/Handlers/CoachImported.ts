@@ -17,6 +17,7 @@ export const CoachImportedHandler: IEventHandler<ICoachImportedEvent> = {
       coachID: p.coachID,
       name: p.name,
       email: p.email,
+      mobile: p.mobile ?? "",
       programId: event._metadata?.programId,
       _version: event._version,
       _updatedAt: new Date(),

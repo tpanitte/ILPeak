@@ -5,6 +5,7 @@ export interface CoachListItem {
   coachID: string;
   name: string;
   email: string;
+  mobile: string;
   programId?: string;
 }
 
@@ -22,6 +23,7 @@ export async function getCoachesList(): Promise<CoachListItem[]> {
     coachID: c.coachID,
     name: c.name,
     email: c.email,
+    mobile: c.mobile ?? "",
     programId: c.programId,
   })) as CoachListItem[];
 }

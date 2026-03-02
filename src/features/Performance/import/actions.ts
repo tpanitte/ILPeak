@@ -9,6 +9,7 @@ export interface ImportCoachRow {
   coachID: string;
   name: string;
   email: string;
+  mobile: string;
 }
 
 export interface ImportParticipantRow {
@@ -36,6 +37,7 @@ export async function importCoachAction(
       coachID: row.coachID,
       name: row.name,
       email: row.email,
+      mobile: row.mobile,
     },
     _metadata: {
       programId,
