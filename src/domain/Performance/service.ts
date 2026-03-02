@@ -2,7 +2,7 @@
 
 import { createService, InstantEventBus } from "atomservices";
 import { MongoEventStore } from "@/infra/db/mongoes";
-import { CoachImportedHandler, ParticipantImportedHandler } from "./Handlers";
+import { CoachImportedHandler, ParticipantImportedHandler, CoachGroupCreatedHandler } from "./Handlers";
 
 const EventStore = new MongoEventStore();
 
@@ -11,6 +11,7 @@ export const PerformanceService = createService({
   EventHandlers: [
     CoachImportedHandler,
     ParticipantImportedHandler,
+    CoachGroupCreatedHandler,
   ],
   EventBus: new InstantEventBus(),
 });
