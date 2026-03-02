@@ -33,7 +33,7 @@ interface RosterTableProps {
 }
 
 function cell(value: string | undefined | null) {
-  return value && value.trim() !== "" ? value : "-";
+  return value && value.trim() !== "" ? value : "[Empty]";
 }
 
 export function RosterTable({

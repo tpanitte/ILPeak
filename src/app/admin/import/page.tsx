@@ -413,10 +413,10 @@ export default function ImportPage() {
                         {c.Name}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {c.Email}
+                        {c.Email || "[Empty]"}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {c.Mobile || "-"}
+                        {c.Mobile || "[Empty]"}
                       </TableCell>
                       <TableCell>{statusBadge(coachStatuses[i])}</TableCell>
                     </TableRow>
@@ -499,7 +499,7 @@ export default function ImportPage() {
                         {p.Name}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {p.Mobile}
+                        {p.Mobile || "[Empty]"}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
                         {p["Coach ID"]}
