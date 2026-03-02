@@ -1,0 +1,1 @@
+export { GroupCreatedHandler } from "./GroupCreated";
