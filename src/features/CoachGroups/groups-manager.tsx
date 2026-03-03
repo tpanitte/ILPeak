@@ -62,6 +62,7 @@ export function GroupsManager({
   const [selectedLeader, setSelectedLeader] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [assignSearch, setAssignSearch] = useState("");
+  const [assignSelected, setAssignSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
   const coaches = initialCoaches;
 
@@ -106,15 +107,30 @@ export function GroupsManager({
   function handleOpenAssign(groupId: string) {
     setAssignGroupId(groupId);
     setAssignSearch("");
+    setAssignSelected(new Set());
     setAssignOpen(true);
   }
 
-  function handleAssignCoach(coachID: string) {
+  function toggleAssignSelect(coachID: string) {
+    setAssignSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(coachID)) next.delete(coachID);
+      else next.add(coachID);
+      return next;
+    });
+  }
+
+  function handleConfirmAssign() {
+    if (assignSelected.size === 0) return;
     setAssignments((prev) => ({
       ...prev,
-      [assignGroupId]: [...(prev[assignGroupId] ?? []), coachID],
+      [assignGroupId]: [
+        ...(prev[assignGroupId] ?? []),
+        ...Array.from(assignSelected),
+      ],
     }));
     setAssignOpen(false);
+    setAssignSelected(new Set());
   }
 
   function handleUnassignCoach(groupId: string, coachID: string) {
@@ -497,16 +513,16 @@ export function GroupsManager({
         </DialogContent>
       </Dialog>
 
-      {/* ---- Assign Coach Dialog ---- */}
+      {/* ---- Assign Coach Dialog (multi-select) ---- */}
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              Assign Coach to {assignGroupName}
+              Assign Coaches to {assignGroupName}
             </DialogTitle>
             <DialogDescription>
-              Select a coach to add to this group. Only unassigned coaches
-              are shown.
+              Check the coaches you want to add, then confirm. Only
+              unassigned coaches are shown.
             </DialogDescription>
           </DialogHeader>
 
@@ -531,40 +547,67 @@ export function GroupsManager({
                 </div>
               ) : (
                 <div className="divide-y divide-border">
-                  {filteredAssignCoaches.map((coach) => (
-                    <button
-                      key={coach.coachID}
-                      type="button"
-                      onClick={() => handleAssignCoach(coach.coachID)}
-                      className="flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-primary/5"
-                    >
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
-                        {coach.name.charAt(0)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground">
-                          {coach.name}
-                        </p>
-                        <p className="font-mono text-[11px] text-muted-foreground">
-                          {coach.coachID}
-                          {coach.email && (
-                            <span className="ml-2 font-sans">
-                              {coach.email}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <UserPlus className="size-4 shrink-0 text-muted-foreground" />
-                    </button>
-                  ))}
+                  {filteredAssignCoaches.map((coach) => {
+                    const isChecked = assignSelected.has(coach.coachID);
+                    return (
+                      <label
+                        key={coach.coachID}
+                        className={`flex w-full cursor-pointer items-center gap-3 px-3 py-3 transition-colors ${
+                          isChecked ? "bg-primary/5" : "hover:bg-muted/50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleAssignSelect(coach.coachID)}
+                          className="size-4 shrink-0 accent-[hsl(var(--primary))]"
+                        />
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                          {coach.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {coach.name}
+                          </p>
+                          <p className="font-mono text-[11px] text-muted-foreground">
+                            {coach.coachID}
+                            {coach.email && (
+                              <span className="ml-2 font-sans">
+                                {coach.email}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              {availableCoaches.length} coach
-              {availableCoaches.length !== 1 ? "es" : ""} available
-            </p>
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-muted-foreground">
+                {assignSelected.size} selected / {availableCoaches.length}{" "}
+                available
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAssignOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleConfirmAssign}
+                  disabled={assignSelected.size === 0}
+                >
+                  <UserPlus className="mr-1.5 size-3.5" />
+                  Assign {assignSelected.size > 0 && `(${assignSelected.size})`}
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
