@@ -17,6 +17,7 @@ export const GroupCreatedHandler: IEventHandler<IGroupCreatedEvent> = {
       programID,
       name,
       coachLeaderID,
+      coaches: [],
       _version: event._version,
       _createdAt: event._createdAt,
       _createdBy: event._createdBy,
