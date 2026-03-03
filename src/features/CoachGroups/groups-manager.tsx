@@ -3,9 +3,6 @@
 import { useState, useTransition } from "react";
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +23,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Plus, UsersRound, Search, UserCheck, Crown } from "lucide-react";
+import {
+  Plus,
+  UsersRound,
+  Search,
+  UserCheck,
+  Crown,
+  UserPlus,
+  X,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import type { CoachListItem } from "@/domain/Performance/Queries/getCoachesList";
 import type { CoachGroupListItem } from "@/domain/Performance/Queries/getCoachGroupsList";
 import { createCoachGroupAction } from "./actions";
@@ -37,20 +44,88 @@ interface Props {
   initialGroups: CoachGroupListItem[];
 }
 
-export function GroupsManager({ programId, initialCoaches, initialGroups }: Props) {
+// Client-side assignment state: groupId -> coachID[]
+type Assignments = Record<string, string[]>;
+
+export function GroupsManager({
+  programId,
+  initialCoaches,
+  initialGroups,
+}: Props) {
   const [groups, setGroups] = useState<CoachGroupListItem[]>(initialGroups);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [assignments, setAssignments] = useState<Assignments>({});
+  const [createOpen, setCreateOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignGroupId, setAssignGroupId] = useState<string>("");
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [newGroupName, setNewGroupName] = useState("");
-  const [selectedLeader, setSelectedLeader] = useState<string>("");
+  const [selectedLeader, setSelectedLeader] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [assignSearch, setAssignSearch] = useState("");
   const [isPending, startTransition] = useTransition();
   const coaches = initialCoaches;
 
-  function getCoachName(coachID: string) {
-    return coaches.find((c) => c.coachID === coachID)?.name ?? coachID;
+  // All assigned coach IDs across all groups (including leaders)
+  const allAssignedIds = new Set<string>();
+  groups.forEach((g) => {
+    allAssignedIds.add(g.leaderCoachID);
+    (assignments[g._id] ?? []).forEach((id) => allAssignedIds.add(id));
+  });
+
+  const unassignedCount = coaches.length - allAssignedIds.size;
+
+  function getCoach(coachID: string) {
+    return coaches.find((c) => c.coachID === coachID);
   }
 
-  const filteredCoaches = coaches.filter(
+  function getCoachName(coachID: string) {
+    return getCoach(coachID)?.name ?? coachID;
+  }
+
+  function getMembersForGroup(groupId: string) {
+    const group = groups.find((g) => g._id === groupId);
+    if (!group) return [];
+    const memberIds = assignments[groupId] ?? [];
+    return [group.leaderCoachID, ...memberIds];
+  }
+
+  function toggleExpand(groupId: string) {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  }
+
+  // Coaches available for assignment to a specific group (not assigned to any group)
+  function getAvailableCoaches() {
+    return coaches.filter((c) => !allAssignedIds.has(c.coachID));
+  }
+
+  function handleOpenAssign(groupId: string) {
+    setAssignGroupId(groupId);
+    setAssignSearch("");
+    setAssignOpen(true);
+  }
+
+  function handleAssignCoach(coachID: string) {
+    setAssignments((prev) => ({
+      ...prev,
+      [assignGroupId]: [...(prev[assignGroupId] ?? []), coachID],
+    }));
+    setAssignOpen(false);
+  }
+
+  function handleUnassignCoach(groupId: string, coachID: string) {
+    setAssignments((prev) => ({
+      ...prev,
+      [groupId]: (prev[groupId] ?? []).filter((id) => id !== coachID),
+    }));
+  }
+
+  // Create group
+  const filteredCreateCoaches = coaches.filter(
     (c) =>
       c.coachID.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -58,14 +133,13 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
 
   function handleCreate() {
     if (!newGroupName.trim() || !selectedLeader) return;
-
     startTransition(async () => {
       try {
-      const result = await createCoachGroupAction(
-        programId,
-        newGroupName.trim(),
-        selectedLeader
-      );
+        const result = await createCoachGroupAction(
+          programId,
+          newGroupName.trim(),
+          selectedLeader
+        );
         if (result.success) {
           setGroups([
             ...groups,
@@ -75,7 +149,7 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
               leaderCoachID: selectedLeader,
             },
           ]);
-          setDialogOpen(false);
+          setCreateOpen(false);
           setNewGroupName("");
           setSelectedLeader("");
           setSearchQuery("");
@@ -86,6 +160,17 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
     });
   }
 
+  // Assign dialog: available coaches filtered
+  const availableCoaches = getAvailableCoaches();
+  const filteredAssignCoaches = availableCoaches.filter(
+    (c) =>
+      c.coachID.toLowerCase().includes(assignSearch.toLowerCase()) ||
+      c.name.toLowerCase().includes(assignSearch.toLowerCase())
+  );
+
+  const assignGroupName =
+    groups.find((g) => g._id === assignGroupId)?.name ?? "";
+
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
@@ -95,10 +180,10 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
             Coach Groups
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create groups and assign a Coach Leader for each.
+            Create groups, assign a leader, then add coaches one at a time.
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 size-4" />
           Create Group
         </Button>
@@ -110,62 +195,170 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
           <UsersRound className="mr-1 size-3" />
           {coaches.length} Coaches
         </Badge>
-        <Badge variant="secondary">
-          {groups.length} Group{groups.length !== 1 ? "s" : ""}
-        </Badge>
+        <Badge variant="secondary">{groups.length} Groups</Badge>
+        <Badge variant="outline">{unassignedCount} Unassigned</Badge>
       </div>
 
-      {/* Groups list */}
+      {/* Groups */}
       {groups.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12 text-[10px] font-bold uppercase tracking-widest">
-                  #
-                </TableHead>
-                <TableHead className="text-[10px] font-bold uppercase tracking-widest">
-                  Group Name
-                </TableHead>
-                <TableHead className="text-[10px] font-bold uppercase tracking-widest">
-                  Coach Leader
-                </TableHead>
-                <TableHead className="text-[10px] font-bold uppercase tracking-widest">
-                  Leader ID
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {groups.map((g, i) => (
-                <TableRow key={g._id}>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {i + 1}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10">
-                        <UsersRound className="size-4 text-primary" />
-                      </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {g.name}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Crown className="size-3.5 text-amber-500" />
-                      <span className="text-sm font-medium text-foreground">
-                        {getCoachName(g.leaderCoachID)}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {g.leaderCoachID}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="space-y-3">
+          {groups.map((g) => {
+            const memberIds = assignments[g._id] ?? [];
+            const totalMembers = 1 + memberIds.length; // leader + assigned
+            const isExpanded = expandedGroups.has(g._id);
+
+            return (
+              <Card key={g._id}>
+                {/* Group header row */}
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(g._id)}
+                  className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-muted/30"
+                >
+                  {isExpanded ? (
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <UsersRound className="size-4 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">
+                      {g.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      <Crown className="mb-0.5 mr-1 inline size-3 text-amber-500" />
+                      {getCoachName(g.leaderCoachID)}
+                      <span className="mx-2 text-border">|</span>
+                      {totalMembers} member{totalMembers !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAssign(g._id);
+                    }}
+                  >
+                    <UserPlus className="mr-1.5 size-3.5" />
+                    Assign
+                  </Button>
+                </button>
+
+                {/* Expanded members list */}
+                {isExpanded && (
+                  <div className="border-t border-border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12 text-[10px] font-bold uppercase tracking-widest">
+                            #
+                          </TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                            Coach ID
+                          </TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                            Name
+                          </TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                            Email
+                          </TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                            Role
+                          </TableHead>
+                          <TableHead className="w-12" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {/* Leader row */}
+                        {(() => {
+                          const coach = getCoach(g.leaderCoachID);
+                          return (
+                            <TableRow className="bg-amber-50/50">
+                              <TableCell className="font-mono text-xs text-muted-foreground">
+                                1
+                              </TableCell>
+                              <TableCell className="font-mono text-xs">
+                                {g.leaderCoachID}
+                              </TableCell>
+                              <TableCell className="text-sm font-medium">
+                                {coach?.name ?? g.leaderCoachID}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {coach?.email || "[Empty]"}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-amber-100 text-amber-700"
+                                >
+                                  <Crown className="mr-1 size-3" />
+                                  Leader
+                                </Badge>
+                              </TableCell>
+                              <TableCell />
+                            </TableRow>
+                          );
+                        })()}
+
+                        {/* Assigned coaches */}
+                        {memberIds.map((coachID, i) => {
+                          const coach = getCoach(coachID);
+                          return (
+                            <TableRow key={coachID}>
+                              <TableCell className="font-mono text-xs text-muted-foreground">
+                                {i + 2}
+                              </TableCell>
+                              <TableCell className="font-mono text-xs">
+                                {coachID}
+                              </TableCell>
+                              <TableCell className="text-sm font-medium">
+                                {coach?.name ?? coachID}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {coach?.email || "[Empty]"}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">Member</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleUnassignCoach(g._id, coachID)
+                                  }
+                                  className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                  title="Remove from group"
+                                >
+                                  <X className="size-3.5" />
+                                </button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+
+                        {/* Empty state for no assigned members */}
+                        {memberIds.length === 0 && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="py-6 text-center text-sm text-muted-foreground"
+                            >
+                              No coaches assigned yet. Click "Assign" to add
+                              coaches.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <Card>
@@ -181,8 +374,8 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
         </Card>
       )}
 
-      {/* Create Group Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* ---- Create Group Dialog ---- */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Create Coach Group</DialogTitle>
@@ -192,7 +385,6 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
           </DialogHeader>
 
           <div className="flex flex-col gap-5 pt-2">
-            {/* Group name */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-foreground">
                 Group Name
@@ -205,13 +397,10 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
               />
             </div>
 
-            {/* Select Coach Leader */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-foreground">
                 Coach Leader
               </label>
-
-              {/* Search */}
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -221,24 +410,25 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
                   className="pl-9"
                 />
               </div>
-
-              {/* Coach list */}
               <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
-                {filteredCoaches.length === 0 ? (
+                {filteredCreateCoaches.length === 0 ? (
                   <div className="p-6 text-center text-sm text-muted-foreground">
                     {coaches.length === 0
-                      ? "No coaches imported yet. Import coaches first."
+                      ? "No coaches imported yet."
                       : "No coaches match your search."}
                   </div>
                 ) : (
                   <div className="divide-y divide-border">
-                    {filteredCoaches.map((coach) => {
-                      const isSelected = selectedLeader === coach.coachID;
+                    {filteredCreateCoaches.map((coach) => {
+                      const isSelected =
+                        selectedLeader === coach.coachID;
                       return (
                         <button
                           key={coach.coachID}
                           type="button"
-                          onClick={() => setSelectedLeader(coach.coachID)}
+                          onClick={() =>
+                            setSelectedLeader(coach.coachID)
+                          }
                           className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
                             isSelected
                               ? "bg-primary/10"
@@ -260,11 +450,6 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
                             </p>
                             <p className="font-mono text-[11px] text-muted-foreground">
                               {coach.coachID}
-                              {coach.email && (
-                                <span className="ml-2 font-sans">
-                                  {coach.email}
-                                </span>
-                              )}
                             </p>
                           </div>
                           {isSelected && (
@@ -288,12 +473,11 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
               )}
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 variant="outline"
                 onClick={() => {
-                  setDialogOpen(false);
+                  setCreateOpen(false);
                   setNewGroupName("");
                   setSelectedLeader("");
                   setSearchQuery("");
@@ -303,11 +487,85 @@ export function GroupsManager({ programId, initialCoaches, initialGroups }: Prop
               </Button>
               <Button
                 onClick={handleCreate}
-                disabled={!newGroupName.trim() || !selectedLeader || isPending}
+                disabled={
+                  !newGroupName.trim() || !selectedLeader || isPending
+                }
               >
                 {isPending ? "Creating..." : "Create Group"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ---- Assign Coach Dialog ---- */}
+      <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Assign Coach to {assignGroupName}
+            </DialogTitle>
+            <DialogDescription>
+              Select a coach to add to this group. Only unassigned coaches
+              are shown.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 pt-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={assignSearch}
+                onChange={(e) => setAssignSearch(e.target.value)}
+                placeholder="Search by ID or name..."
+                className="pl-9"
+                autoFocus
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto rounded-lg border border-border">
+              {filteredAssignCoaches.length === 0 ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  {availableCoaches.length === 0
+                    ? "All coaches are assigned to groups."
+                    : "No coaches match your search."}
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {filteredAssignCoaches.map((coach) => (
+                    <button
+                      key={coach.coachID}
+                      type="button"
+                      onClick={() => handleAssignCoach(coach.coachID)}
+                      className="flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-primary/5"
+                    >
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                        {coach.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {coach.name}
+                        </p>
+                        <p className="font-mono text-[11px] text-muted-foreground">
+                          {coach.coachID}
+                          {coach.email && (
+                            <span className="ml-2 font-sans">
+                              {coach.email}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <UserPlus className="size-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {availableCoaches.length} coach
+              {availableCoaches.length !== 1 ? "es" : ""} available
+            </p>
           </div>
         </DialogContent>
       </Dialog>
