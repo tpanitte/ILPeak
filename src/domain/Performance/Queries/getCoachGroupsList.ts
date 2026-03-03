@@ -4,6 +4,7 @@ export interface CoachGroupListItem {
   _id: string;
   name: string;
   coachLeaderID: string;
+  coaches: string[];
 }
 
 export async function getCoachGroupsList(): Promise<CoachGroupListItem[]> {
@@ -19,5 +20,6 @@ export async function getCoachGroupsList(): Promise<CoachGroupListItem[]> {
     _id: g._id.toString(),
     name: g.name,
     coachLeaderID: g.coachLeaderID,
+    coaches: g.coaches ?? [],
   })) as CoachGroupListItem[];
 }

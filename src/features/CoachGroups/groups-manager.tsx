@@ -30,13 +30,12 @@ import {
   UserCheck,
   Crown,
   UserPlus,
-  X,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
 import type { CoachListItem } from "@/domain/Performance/Queries/getCoachesList";
 import type { CoachGroupListItem } from "@/domain/Performance/Queries/getCoachGroupsList";
-import { createCoachGroupAction } from "./actions";
+import { createCoachGroupAction, assignCoachToGroupAction } from "./actions";
 
 interface Props {
   programId: string;
@@ -44,16 +43,12 @@ interface Props {
   initialGroups: CoachGroupListItem[];
 }
 
-// Client-side assignment state: groupId -> coachID[]
-type Assignments = Record<string, string[]>;
-
 export function GroupsManager({
   programId,
   initialCoaches,
   initialGroups,
 }: Props) {
   const [groups, setGroups] = useState<CoachGroupListItem[]>(initialGroups);
-  const [assignments, setAssignments] = useState<Assignments>({});
   const [createOpen, setCreateOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignGroupId, setAssignGroupId] = useState<string>("");
@@ -70,7 +65,7 @@ export function GroupsManager({
   const allAssignedIds = new Set<string>();
   groups.forEach((g) => {
     allAssignedIds.add(g.coachLeaderID);
-    (assignments[g._id] ?? []).forEach((id) => allAssignedIds.add(id));
+    (g.coaches ?? []).forEach((id) => allAssignedIds.add(id));
   });
 
   const unassignedCount = coaches.length - allAssignedIds.size;
@@ -86,8 +81,7 @@ export function GroupsManager({
   function getMembersForGroup(groupId: string) {
     const group = groups.find((g) => g._id === groupId);
     if (!group) return [];
-    const memberIds = assignments[groupId] ?? [];
-    return [group.coachLeaderID, ...memberIds];
+    return [group.coachLeaderID, ...(group.coaches ?? [])];
   }
 
   function toggleExpand(groupId: string) {
@@ -122,22 +116,26 @@ export function GroupsManager({
 
   function handleConfirmAssign() {
     if (assignSelected.size === 0) return;
-    setAssignments((prev) => ({
-      ...prev,
-      [assignGroupId]: [
-        ...(prev[assignGroupId] ?? []),
-        ...Array.from(assignSelected),
-      ],
-    }));
-    setAssignOpen(false);
-    setAssignSelected(new Set());
-  }
-
-  function handleUnassignCoach(groupId: string, coachID: string) {
-    setAssignments((prev) => ({
-      ...prev,
-      [groupId]: (prev[groupId] ?? []).filter((id) => id !== coachID),
-    }));
+    const selectedArr = Array.from(assignSelected);
+    startTransition(async () => {
+      try {
+        for (const coachID of selectedArr) {
+          await assignCoachToGroupAction(programId, assignGroupId, coachID);
+        }
+        // Update local state to reflect assignments
+        setGroups((prev) =>
+          prev.map((g) =>
+            g._id === assignGroupId
+              ? { ...g, coaches: [...(g.coaches ?? []), ...selectedArr] }
+              : g
+          )
+        );
+        setAssignOpen(false);
+        setAssignSelected(new Set());
+      } catch (err) {
+        console.error("Failed to assign coaches:", err);
+      }
+    });
   }
 
   // Create group
@@ -163,6 +161,7 @@ export function GroupsManager({
               _id: result.groupId,
               name: newGroupName.trim(),
               coachLeaderID: selectedLeader,
+              coaches: [],
             },
           ]);
           setCreateOpen(false);
@@ -219,7 +218,7 @@ export function GroupsManager({
       {groups.length > 0 ? (
         <div className="space-y-3">
           {groups.map((g) => {
-            const memberIds = assignments[g._id] ?? [];
+            const memberIds = g.coaches ?? [];
             const totalMembers = 1 + memberIds.length; // leader + assigned
             const isExpanded = expandedGroups.has(g._id);
 
@@ -339,18 +338,7 @@ export function GroupsManager({
                               <TableCell>
                                 <Badge variant="secondary">Member</Badge>
                               </TableCell>
-                              <TableCell>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleUnassignCoach(g._id, coachID)
-                                  }
-                                  className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                  title="Remove from group"
-                                >
-                                  <X className="size-3.5" />
-                                </button>
-                              </TableCell>
+                              <TableCell />
                             </TableRow>
                           );
                         })}

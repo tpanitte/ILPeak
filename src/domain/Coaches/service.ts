@@ -6,6 +6,7 @@ import { MongoEventStore } from "@/infra/db/mongoes";
 import {
   CoachesImportedHandler,
   GroupCreatedHandler,
+  CoachToGroupAssignedHandler,
 } from "./Handlers";
 
 const EventStore = new MongoEventStore();
@@ -15,6 +16,7 @@ export const CoachesService = createService({
   EventHandlers: [
     CoachesImportedHandler,
     GroupCreatedHandler,
+    CoachToGroupAssignedHandler,
   ],
   EventBus: new InstantEventBus(),
 });
