@@ -3,7 +3,7 @@ import { connectAppDatabase } from "@/infra/db/mongodb";
 export interface CoachGroupListItem {
   _id: string;
   name: string;
-  leaderCoachID: string;
+  coachLeaderID: string;
 }
 
 export async function getCoachGroupsList(): Promise<CoachGroupListItem[]> {
@@ -18,6 +18,6 @@ export async function getCoachGroupsList(): Promise<CoachGroupListItem[]> {
   return groups.map((g) => ({
     _id: g._id.toString(),
     name: g.name,
-    leaderCoachID: g.leaderCoachID,
+    coachLeaderID: g.coachLeaderID,
   })) as CoachGroupListItem[];
 }

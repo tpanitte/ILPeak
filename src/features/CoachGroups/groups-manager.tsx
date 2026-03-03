@@ -68,7 +68,7 @@ export function GroupsManager({
   // All assigned coach IDs across all groups (including leaders)
   const allAssignedIds = new Set<string>();
   groups.forEach((g) => {
-    allAssignedIds.add(g.leaderCoachID);
+    allAssignedIds.add(g.coachLeaderID);
     (assignments[g._id] ?? []).forEach((id) => allAssignedIds.add(id));
   });
 
@@ -86,7 +86,7 @@ export function GroupsManager({
     const group = groups.find((g) => g._id === groupId);
     if (!group) return [];
     const memberIds = assignments[groupId] ?? [];
-    return [group.leaderCoachID, ...memberIds];
+    return [group.coachLeaderID, ...memberIds];
   }
 
   function toggleExpand(groupId: string) {
@@ -146,7 +146,7 @@ export function GroupsManager({
             {
               _id: result.groupId,
               name: newGroupName.trim(),
-              leaderCoachID: selectedLeader,
+              coachLeaderID: selectedLeader,
             },
           ]);
           setCreateOpen(false);
@@ -210,43 +210,42 @@ export function GroupsManager({
             return (
               <Card key={g._id}>
                 {/* Group header row */}
-                <button
-                  type="button"
-                  onClick={() => toggleExpand(g._id)}
-                  className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-muted/30"
-                >
-                  {isExpanded ? (
-                    <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-                  )}
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                    <UsersRound className="size-4 text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground">
-                      {g.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      <Crown className="mb-0.5 mr-1 inline size-3 text-amber-500" />
-                      {getCoachName(g.leaderCoachID)}
-                      <span className="mx-2 text-border">|</span>
-                      {totalMembers} member{totalMembers !== 1 ? "s" : ""}
-                    </p>
-                  </div>
+                <div className="flex w-full items-center gap-4 px-5 py-4">
+                  <button
+                    type="button"
+                    onClick={() => toggleExpand(g._id)}
+                    className="flex min-w-0 flex-1 items-center gap-4 text-left transition-colors hover:opacity-70"
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    )}
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <UsersRound className="size-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {g.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        <Crown className="mb-0.5 mr-1 inline size-3 text-amber-500" />
+                        {getCoachName(g.coachLeaderID)}
+                        <span className="mx-2 text-border">|</span>
+                        {totalMembers} member{totalMembers !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </button>
                   <Button
                     size="sm"
                     variant="outline"
                     className="shrink-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenAssign(g._id);
-                    }}
+                    onClick={() => handleOpenAssign(g._id)}
                   >
                     <UserPlus className="mr-1.5 size-3.5" />
                     Assign
                   </Button>
-                </button>
+                </div>
 
                 {/* Expanded members list */}
                 {isExpanded && (
@@ -275,17 +274,17 @@ export function GroupsManager({
                       <TableBody>
                         {/* Leader row */}
                         {(() => {
-                          const coach = getCoach(g.leaderCoachID);
+                          const coach = getCoach(g.coachLeaderID);
                           return (
                             <TableRow className="bg-amber-50/50">
                               <TableCell className="font-mono text-xs text-muted-foreground">
                                 1
                               </TableCell>
                               <TableCell className="font-mono text-xs">
-                                {g.leaderCoachID}
+                                {g.coachLeaderID}
                               </TableCell>
                               <TableCell className="text-sm font-medium">
-                                {coach?.name ?? g.leaderCoachID}
+                                {coach?.name ?? g.coachLeaderID}
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">
                                 {coach?.email || "[Empty]"}
