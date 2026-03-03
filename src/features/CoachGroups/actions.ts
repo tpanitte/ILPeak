@@ -1,8 +1,8 @@
 "use server";
 
 import { mockAuth } from "@/lib/mock-auth";
-import { CoachesService } from "@/domain/CoachGroups/service";
-import { createGroup } from "@/domain/CoachGroups/Events/GroupCreated";
+import { CoachesService } from "@/domain/Coaches/service";
+import { createGroup } from "@/domain/Coaches/Events/GroupCreated";
 
 export async function createCoachGroupAction(
   programId: string,
