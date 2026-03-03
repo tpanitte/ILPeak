@@ -4,13 +4,28 @@ import { IEventHandler } from "atomservices";
 import { EventName, ICoachesImportedEvent } from "../Events/CoachesImported";
 import { connectAppDatabase } from "@/infra/db/mongodb";
 
+interface ICoachesState {
+  _id: string;
+  coachID: string;
+  name: string;
+  email: string;
+  mobile: string;
+  programID: string;
+  _version: number;
+  _createdAt: Date;
+  _createdBy: string;
+  _updatedAt: Date;
+  _updatedBy: string;
+}
+
 export const CoachesImportedHandler: IEventHandler<ICoachesImportedEvent> = {
   name: EventName,
   handle: async (event: ICoachesImportedEvent): Promise<void> => {
     const db = await connectAppDatabase();
-    const collection = db.collection<{ _id: string; } & any>("coaches_view");
+    const collection = db.collection<{ _id: string; } & ICoachesState>("coaches_view");
 
     const { coachID, name, email, programID, mobile } = event.payloads;
+    const { _createdAt, _createdBy } = event;
 
     const data = {
       _id: event.aggregateID,
@@ -20,8 +35,10 @@ export const CoachesImportedHandler: IEventHandler<ICoachesImportedEvent> = {
       mobile,
       programID,
       _version: event._version,
-      _updatedAt: new Date(),
-      _updatedBy: event._createdBy
+      _createdAt,
+      _createdBy,
+      _updatedAt: _createdAt,
+      _updatedBy: _createdBy
     };
 
     await collection.updateOne(

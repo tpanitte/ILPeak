@@ -15,7 +15,7 @@ export interface IGroupCreatedEvent extends IEvent<IGroupCreatedPayloads> { }
 
 export const createGroup = EventBuilder<IGroupCreatedEvent>({
   EventName,
-  AggregateType: "CoachGroups",
+  AggregateType: "Coaches",
   AggregateIdentifier: () => crypto.randomUUID(),
   EventIdentifier: () => crypto.randomUUID(),
 });
