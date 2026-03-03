@@ -1,17 +1,15 @@
-// src/domain/ILPrograms/service.ts
+// src/domain/Performance/service.ts
+// Only handles Performance-specific events (e.g. ProgramGoalsSet)
 
 import { createService, InstantEventBus } from "atomservices";
 import { MongoEventStore } from "@/infra/db/mongoes";
-import { CoachImportedHandler, ParticipantImportedHandler, CoachGroupCreatedHandler } from "./Handlers";
 
 const EventStore = new MongoEventStore();
 
 export const PerformanceService = createService({
   EventStore,
   EventHandlers: [
-    CoachImportedHandler,
-    ParticipantImportedHandler,
-    CoachGroupCreatedHandler,
+    // ProgramGoalsSetHandler -- add when implemented
   ],
   EventBus: new InstantEventBus(),
 });

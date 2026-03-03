@@ -32,11 +32,12 @@ import type { CoachGroupListItem } from "@/domain/Performance/Queries/getCoachGr
 import { createCoachGroupAction } from "./actions";
 
 interface Props {
+  programId: string;
   initialCoaches: CoachListItem[];
   initialGroups: CoachGroupListItem[];
 }
 
-export function GroupsManager({ initialCoaches, initialGroups }: Props) {
+export function GroupsManager({ programId, initialCoaches, initialGroups }: Props) {
   const [groups, setGroups] = useState<CoachGroupListItem[]>(initialGroups);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
@@ -60,10 +61,11 @@ export function GroupsManager({ initialCoaches, initialGroups }: Props) {
 
     startTransition(async () => {
       try {
-        const result = await createCoachGroupAction(
-          newGroupName.trim(),
-          selectedLeader
-        );
+      const result = await createCoachGroupAction(
+        programId,
+        newGroupName.trim(),
+        selectedLeader
+      );
         if (result.success) {
           setGroups([
             ...groups,

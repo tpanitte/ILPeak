@@ -34,5 +34,6 @@ export default async function GroupsPage() {
     );
   }
 
-  return <GroupsManager initialCoaches={coaches} initialGroups={groups} />;
+  // TODO: Add program selector like the import page -- for now uses first available program
+  return <GroupsManager programId="" initialCoaches={coaches} initialGroups={groups} />;
 }

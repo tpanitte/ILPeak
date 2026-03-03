@@ -1,9 +1,10 @@
 "use server";
 
 import { mockAuth } from "@/lib/mock-auth";
-import { PerformanceService } from "@/domain/Performance/service";
-import { importCoach } from "@/domain/Performance/Events/CoachImported";
-import { importParticipant } from "@/domain/Performance/Events/ParticipantImported";
+import { CoachesService } from "@/domain/Coaches/service";
+import { ParticipantsService } from "@/domain/Participants/service";
+import { importCoaches } from "@/domain/Coaches/Events/CoachesImported";
+import { importParticipants } from "@/domain/Participants/Events/ParticipantsImported";
 
 export interface ImportCoachRow {
   coachID: string;
@@ -13,14 +14,14 @@ export interface ImportCoachRow {
 }
 
 export interface ImportParticipantRow {
-  ppID: string;
+  participantID: string;
   name: string;
   mobile: string;
   coachID: string;
 }
 
 /**
- * Import a single coach row as one CoachImported event.
+ * Import a single coach row as one CoachesImported event.
  * Called once per CSV row from the UI.
  */
 export async function importCoachAction(
@@ -30,7 +31,7 @@ export async function importCoachAction(
   const { userId } = await mockAuth();
   if (!userId) throw new Error("Unauthorized");
 
-  const event = importCoach({
+  const event = importCoaches({
     _version: 0,
     _createdBy: userId,
     payloads: {
@@ -38,19 +39,17 @@ export async function importCoachAction(
       name: row.name,
       email: row.email,
       mobile: row.mobile,
-    },
-    _metadata: {
-      programId,
+      programID: programId,
     },
   });
 
-  await PerformanceService.dispatch(event);
+  await CoachesService.dispatch(event);
 
   return { success: true, coachID: row.coachID };
 }
 
 /**
- * Import a single participant row as one ParticipantImported event.
+ * Import a single participant row as one ParticipantsImported event.
  * Called once per CSV row from the UI.
  */
 export async function importParticipantAction(
@@ -60,21 +59,18 @@ export async function importParticipantAction(
   const { userId } = await mockAuth();
   if (!userId) throw new Error("Unauthorized");
 
-  const event = importParticipant({
+  const event = importParticipants({
     _version: 0,
     _createdBy: userId,
     payloads: {
-      ppID: row.ppID,
+      participantID: row.participantID,
       name: row.name,
-      mobile: row.mobile,
       coachID: row.coachID,
-    },
-    _metadata: {
-      programId,
+      programID: programId,
     },
   });
 
-  await PerformanceService.dispatch(event);
+  await ParticipantsService.dispatch(event);
 
-  return { success: true, ppID: row.ppID };
+  return { success: true, participantID: row.participantID };
 }

@@ -232,7 +232,7 @@ export default function ImportPage() {
 
       try {
         await importParticipantAction(selectedProgram._id, {
-          ppID: participants[i].ID,
+          participantID: participants[i].ID,
           name: participants[i].Name,
           mobile: participants[i].Mobile ?? "",
           coachID: participants[i]["Coach ID"],

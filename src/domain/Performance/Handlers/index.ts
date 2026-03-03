@@ -1,3 +1,2 @@
-export { CoachImportedHandler } from "./CoachImported";
-export { ParticipantImportedHandler } from "./ParticipantImported";
-export { CoachGroupCreatedHandler } from "./CoachGroupCreated";
+// Performance handlers -- only ProgramGoalsSet belongs here
+// export { ProgramGoalsSetHandler } from "./ProgramGoalsSet";
