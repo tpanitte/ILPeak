@@ -1,4 +1,4 @@
-// src/domain/CoachGroups/Handlers/GroupCreated.ts
+// src/domain/CoachGroups/Handlers/CoachToGroupAssigned.ts
 
 import { IEventHandler } from "atomservices";
 import { connectAppDatabase } from "@/infra/db/mongodb";
