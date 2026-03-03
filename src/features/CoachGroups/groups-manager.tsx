@@ -32,6 +32,7 @@ import {
   UserPlus,
   ChevronDown,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import type { CoachListItem } from "@/domain/Performance/Queries/getCoachesList";
 import type { CoachGroupListItem } from "@/domain/Performance/Queries/getCoachGroupsList";
@@ -583,16 +584,26 @@ export function GroupsManager({
                   variant="outline"
                   size="sm"
                   onClick={() => setAssignOpen(false)}
+                  disabled={isPending}
                 >
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   onClick={handleConfirmAssign}
-                  disabled={assignSelected.size === 0}
+                  disabled={assignSelected.size === 0 || isPending}
                 >
-                  <UserPlus className="mr-1.5 size-3.5" />
-                  Assign {assignSelected.size > 0 && `(${assignSelected.size})`}
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                      Assigning...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-1.5 size-3.5" />
+                      Assign {assignSelected.size > 0 && `(${assignSelected.size})`}
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
