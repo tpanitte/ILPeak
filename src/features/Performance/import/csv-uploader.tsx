@@ -16,7 +16,7 @@ const CSV_FIELDS: Record<string, { label: string; columns: string[] }> = {
   },
   PP: {
     label: "Participants (PP)",
-    columns: ["ID", "Name", "Mobile", "Coach ID"],
+    columns: ["ID", "NName", "FName", "Mobile", "CoachID"],
   },
 };
 

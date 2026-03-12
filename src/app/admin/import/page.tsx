@@ -42,9 +42,10 @@ interface Coach {
 
 interface Participant {
   ID: string;
-  Name: string;
+  NName: string;
+  FName: string;
   Mobile: string;
-  "Coach ID": string;
+  CoachID: string;
 }
 
 interface ProgramOption {
@@ -233,9 +234,10 @@ export default function ImportPage() {
       try {
         await importParticipantAction(selectedProgram._id, {
           participantID: participants[i].ID,
-          name: participants[i].Name,
+          nName: participants[i].NName ?? "",
+          fName: participants[i].FName ?? "",
           mobile: participants[i].Mobile ?? "",
-          coachID: participants[i]["Coach ID"],
+          coachID: participants[i].CoachID ?? "",
         });
         setPpStatuses((prev) => {
           const next = [...prev];
@@ -464,7 +466,10 @@ export default function ImportPage() {
                       ID
                     </TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest">
-                      Name
+                      Nickname
+                    </TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest">
+                      First Name
                     </TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest">
                       Mobile
@@ -496,13 +501,16 @@ export default function ImportPage() {
                         {p.ID}
                       </TableCell>
                       <TableCell className="text-sm font-medium">
-                        {p.Name}
+                        {p.NName || "[Empty]"}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {p.FName || "[Empty]"}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {p.Mobile || "[Empty]"}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
-                        {p["Coach ID"]}
+                        {p.CoachID || "[Empty]"}
                       </TableCell>
                       <TableCell>{statusBadge(ppStatuses[i])}</TableCell>
                     </TableRow>
