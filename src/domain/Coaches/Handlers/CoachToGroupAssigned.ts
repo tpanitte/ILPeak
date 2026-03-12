@@ -8,7 +8,7 @@ export const CoachToGroupAssignedHandler: IEventHandler<ICoachToGroupAssignedEve
   name: EventName,
   handle: async (event: ICoachToGroupAssignedEvent): Promise<void> => {
     const db = await connectAppDatabase();
-    const collection = db.collection<{ _id: string } & Record<string, unknown>>("coach_groups_view");
+    const collection = db.collection<{ _id: string; coaches: string[] } & Record<string, unknown>>("coach_groups_view");
 
     const { coachID, groupID } = event.payloads;
 

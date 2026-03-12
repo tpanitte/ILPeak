@@ -7,7 +7,8 @@ export const EventName = "ParticipantsImported";
 // Event: Participants Imported
 export interface IParticipantsImportedPayloads {
   participantID: string;
-  name: string;
+  nName: string;
+  fName: string;
   programID: string;
   coachID: string;
 }

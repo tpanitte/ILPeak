@@ -10,16 +10,20 @@ export const ParticipantsImportedHandler: IEventHandler<IParticipantsImportedEve
     const db = await connectAppDatabase();
     const collection = db.collection<{ _id: string; } & any>("participants_view");
 
-    const { participantID, name, programID, coachID } = event.payloads;
+    const { participantID, nName, fName, programID, coachID } = event.payloads;
+    const { _createdAt, _createdBy } = event;
 
     const data = {
       _id: event.aggregateID,
       participantID,
-      name,
+      nName,
+      fName,
       programID,
       coachID,
       _version: event._version,
-      _updatedAt: new Date(),
+      _createdAt,
+      _createdBy,
+      _updatedAt: event._createdAt,
       _updatedBy: event._createdBy
     };
 
